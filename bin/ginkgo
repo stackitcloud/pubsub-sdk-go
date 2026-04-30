@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+set -e
+
+VERSION=$(go list -m -f "{{ .Version }}" github.com/onsi/ginkgo/v2)
+
+exec mise exec ginkgo@"${VERSION}" -- ginkgo "$@"
