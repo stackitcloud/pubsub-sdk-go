@@ -1,0 +1,47 @@
+package example
+
+import (
+	"context"
+	"log"
+
+	"dev.azure.com/schwarzit-wiking/schwarzit.stackit-pubsub/stackit-pubsub-go-sdk.git/pkg/pubsub"
+	"github.com/google/uuid"
+	"github.com/stackitcloud/stackit-sdk-go/core/auth"
+	"github.com/stackitcloud/stackit-sdk-go/core/config"
+)
+
+func pull() {
+
+	// Round Tripper Declaration
+	rt, err := auth.DefaultAuth(&config.Configuration{
+		ServiceAccountKey: "./service-account-key.json",
+		TokenCustomUrl:    "https://service-account.api.stackit.cloud/token",
+	})
+	if err != nil {
+		log.Printf("Error creating authentication token: %v", err)
+	}
+
+	//setup your TopicID and Subscription ID
+	topicID := uuid.MustParse("00000000-0000-0000-0000-000000000000")
+	subscriptionID := uuid.MustParse("00000000-0000-0000-0000-000000000000")
+
+	// Declare subscriber
+	subscriber := pubsub.NewSubscriber(topicID,
+		subscriptionID,
+		pubsub.WithHTTPRoundTripper(rt),
+		pubsub.WithHost("pubsub.eu01.onstackit.cloud"),
+	)
+
+	// Pull messages via subscription
+	pulledMessages, _ := subscriber.Pull(context.Background(), pubsub.WithMaxMessages(10))
+
+	log.Printf("Successfully pulled message: %v", pulledMessages)
+
+	// get your AckIDs and acknowledge them
+	ackIDs := pulledMessages.GetAckIDs()
+	err = subscriber.Ack(context.Background(), ackIDs)
+
+	// get your NackIDs and not acknowledge them
+	nackIDs := pulledMessages.GetAckIDs()
+	err = subscriber.Nack(context.Background(), nackIDs)
+}
