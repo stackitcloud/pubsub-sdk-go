@@ -1,4 +1,4 @@
-module dev.azure.com/schwarzit-wiking/schwarzit.stackit-pubsub/stackit-pubsub-go-sdk.git
+module github.com/stackitcloud/pubsub-sdk-go.git
 
 go 1.26.0
 

@@ -10,7 +10,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/google/uuid"
 
-	"dev.azure.com/schwarzit-wiking/schwarzit.stackit-pubsub/stackit-pubsub-go-sdk.git/pkg/pubsub/api"
+	"github.com/stackitcloud/pubsub-sdk-go.git/pkg/pubsub/api"
 )
 
 type Subscriber struct {

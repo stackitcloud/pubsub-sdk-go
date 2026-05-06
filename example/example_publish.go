@@ -5,8 +5,8 @@ import (
 	"encoding/base64"
 	"log"
 
-	"dev.azure.com/schwarzit-wiking/schwarzit.stackit-pubsub/stackit-pubsub-go-sdk.git/pkg/pubsub"
 	"github.com/google/uuid"
+	"github.com/stackitcloud/pubsub-sdk-go.git/pkg/pubsub"
 	"github.com/stackitcloud/stackit-sdk-go/core/auth"
 	"github.com/stackitcloud/stackit-sdk-go/core/config"
 )

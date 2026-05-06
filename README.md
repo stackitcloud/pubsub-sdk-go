@@ -18,7 +18,7 @@ Before you begin, you will need the following:
 To use the SDK in your project, install it using `go get`:
 
 ```bash
-go get [dev.azure.com/schwarzit-wiking/schwarzit.stackit-pubsub/stackit-pubsub-go-sdk.git](https://dev.azure.com/schwarzit-wiking/schwarzit.stackit-pubsub/stackit-pubsub-go-sdk.git)
+go get [github.com/stackitcloud/pubsub-sdk-go.git](https://github.com/stackitcloud/pubsub-sdk-go.git)
 ```
 
 ### 2. Usage

@@ -8,7 +8,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"dev.azure.com/schwarzit-wiking/schwarzit.stackit-pubsub/stackit-pubsub-go-sdk.git/pkg/pubsub"
+	"github.com/stackitcloud/pubsub-sdk-go.git/pkg/pubsub"
 )
 
 var _ = Describe("Acknowledge messages", func() {
