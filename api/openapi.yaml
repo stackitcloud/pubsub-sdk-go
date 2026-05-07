@@ -1,25 +1,10 @@
+# For details see https://spec.openapis.org/oas/v3.0.3.html
 openapi: 3.0.3
 info:
   version: 1alpha.0.0
   title: STACKIT PubSub Data Plane API
   description: |
     This API provides endpoints for managing PubSubs.
-
-x-stackit-api:
-  type: stackit
-x-stackit-scope:
-  visibility: private
-x-stackit-sdk:
-  include: false
-x-stackit-cors:
-  allow_origins_default:
-    - portal
-    - backoffice
-x-stackit-portal:
-  cors: true
-x-stackit-signer:
-  audience:
-    - pubsub.stackit.cloud
 
 servers:
   - url: https://{topicId}.api.pubsub-dp.eu01.dev.stackit.cloud
@@ -28,21 +13,18 @@ servers:
       topicId:
         description: The Topic UUID.
         default: "00000000-0000-0000-0000-000000000000"
-    x-stackit-stage: dev-eu01
   - url: https://{topicId}.api.pubsub-dp.eu01.qa.stackit.cloud
     description: QA endpoint in eu01.
     variables:
       topicId:
         description: The Topic UUID.
         default: "00000000-0000-0000-0000-000000000000"
-    x-stackit-stage: qa-eu01
   - url: https://{topicId}.api.pubsub-dp.eu01.stackit.cloud
     description: Production endpoint in eu01.
     variables:
       topicId:
         description: The Topic UUID.
         default: "00000000-0000-0000-0000-000000000000"
-    x-stackit-stage: prd-eu01
 
 paths:
   /v1alpha/publish:
@@ -235,8 +217,6 @@ components:
       description: Gateway Timeout. The request to a backend service timed out.
   schemas:
     publishMessage:
-      x-stackit-sdk:
-        schema-name: publishMessage
       required:
         - data
       properties:
@@ -245,8 +225,6 @@ components:
           format: byte
           description: Base64 encoded message payload.
     publishMessageToTopicRequest:
-      x-stackit-sdk:
-        schema-name: publishMessageToTopicPayload
       required:
         - messages
       properties:
@@ -256,8 +234,6 @@ components:
             $ref: '#/components/schemas/publishMessage'
           description: The messages to publish.
     publishMessageResponse:
-      x-stackit-sdk:
-        schema-name: publishMessageResponse
       required:
         - messageIds
       properties:
@@ -268,8 +244,6 @@ components:
             format: uint64
             description: A list of unique, increasing sequence numbers identifying the messages.
     messages:
-      x-stackit-sdk:
-        schema-name: messages
       required:
         - messages
       properties:
@@ -278,8 +252,6 @@ components:
           items:
             $ref: '#/components/schemas/message'
     message:
-      x-stackit-sdk:
-        schema-name: message
       required:
         - id
         - ackId
@@ -308,8 +280,6 @@ components:
           minimum: 1
           description: Number of times the message has been tried to be delivered.
     ackMessagesFromTopicRequest:
-      x-stackit-sdk:
-        schema-name: ackMessagePayload
       required:
         - ackIds
       properties:
@@ -319,8 +289,6 @@ components:
             type: string
           description: List of ids to acknowledge.
     nackMessagesFromTopicRequest:
-      x-stackit-sdk:
-        schema-name: nackMessagePayload
       required:
         - nackIds
       properties:
