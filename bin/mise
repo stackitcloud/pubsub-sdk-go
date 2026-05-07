@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+set -e
+
+MISE_VERSION="2025.8.21"
+
+MISE_STATUS_MESSAGE_MISSING_TOOLS="never"
+MISE_TRUSTED_CONFIG_PATHS=$(cd -- "$(dirname "$0")"/.. &>/dev/null && pwd)
+export MISE_STATUS_MESSAGE_MISSING_TOOLS MISE_TRUSTED_CONFIG_PATHS MISE_VERSION
+
+MISE="${HOME}/.cache/mise/${MISE_VERSION}/mise"
+
+if ! [ -x "${MISE}" ]
+then
+   MISE_INSTALL_PATH="${MISE}" "$(dirname "$0")"/../scripts/install_mise.sh
+fi
+
+exec "${MISE}" "$@"
