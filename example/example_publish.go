@@ -31,7 +31,7 @@ func publish() {
 	)
 
 	// Create a message to publish to the topic and encode it to base64 format
-	message := pubsub.StringsToBase64("Hello PubSub from example")
+	message := pubsub.StringsToBase64("Hello PubSub from example", "This is another message")
 
 	// Publish the messages to the topic using the publisher client
 	_, err = publisher.Publish(
