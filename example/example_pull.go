@@ -10,6 +10,7 @@ import (
 	"github.com/stackitcloud/stackit-sdk-go/core/config"
 )
 
+//nolint:all
 func pull() {
 
 	// Round Tripper Declaration

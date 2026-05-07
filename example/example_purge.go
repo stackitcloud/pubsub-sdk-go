@@ -10,6 +10,7 @@ import (
 	"github.com/stackitcloud/stackit-sdk-go/core/config"
 )
 
+//nolint:all
 func purge() {
 	// Round Tripper Declaration
 	rt, err := auth.DefaultAuth(&config.Configuration{
