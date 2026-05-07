@@ -2,7 +2,6 @@ package example
 
 import (
 	"context"
-	"encoding/base64"
 	"log"
 
 	"github.com/google/uuid"
@@ -32,16 +31,12 @@ func publish() {
 	)
 
 	// Create a message to publish to the topic and encode it to base64 format
-	message := []byte("Hello PubSub from example")
-	encodedMessage := base64.StdEncoding.EncodeToString(message)
-	messagesToPublish := [][]byte{
-		[]byte(encodedMessage),
-	}
+	message := pubsub.ConvertToBase64("Hello PubSub from example")
 
 	// Publish the messages to the topic using the publisher client
 	_, err = publisher.Publish(
 		context.Background(),
-		messagesToPublish,
+		message,
 	)
 	if err != nil {
 		log.Printf("Error publishing message: %v", err)
