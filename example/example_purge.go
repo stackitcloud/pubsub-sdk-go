@@ -15,7 +15,7 @@ func purge() {
 
 	// Authentication with STACKIT SDK - Returns a Round-Tripper
 	rt, err := auth.DefaultAuth(&config.Configuration{
-		ServiceAccountKey: "./service-account-key.json",
+		ServiceAccountKeyPath: "./service-account-key.json",
 	})
 	if err != nil {
 		log.Printf("Error creating authentication token: %v", err)

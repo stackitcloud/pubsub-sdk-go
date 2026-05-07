@@ -32,7 +32,7 @@ To authenticate against the STACKIT CLI please take a look at the [Dokumentation
 
 ```go
 roundTripper, err := auth.DefaultAuth(&config.Configuration{
-    ServiceAccountKey: "./service-account-key.json",
+    ServiceAccountKeyPath: "./service-account-key.json",
 })
 if err != nil {
     log.Printf("Error creating authentication token: %v", err)
