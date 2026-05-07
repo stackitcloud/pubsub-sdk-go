@@ -24,7 +24,7 @@ go get github.com/stackitcloud/pubsub-sdk-go.git
 ### 2. Usage
 
 To interact with the PubSub Dataplane, you need to create and configure a `Publisher` or a `Subscriber`.
-You will find an example Folder in the root directory, with ready to copy examples for using the SDK even easier.
+You will find an [example Folder](./example) in the root directory, with ready to copy examples for using the SDK even easier.
 
 The recommended way to handle authentication is by using a `RoundTripper` from the core STACKIT Go SDK, which automatically manages service account tokens.
 For initiating the Roundtripper you need a service Account, this you can get in the STACKIT Portal.
