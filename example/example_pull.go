@@ -13,16 +13,16 @@ import (
 //nolint:all
 func pull() {
 
-	// Round Tripper Declaration
+	// Authentication with STACKIT SDK - Returns a Round-Tripper
 	rt, err := auth.DefaultAuth(&config.Configuration{
 		ServiceAccountKey: "./service-account-key.json",
-		TokenCustomUrl:    "https://service-account.api.stackit.cloud/token",
 	})
 	if err != nil {
 		log.Printf("Error creating authentication token: %v", err)
 	}
 
-	//setup your TopicID and Subscription ID
+	// Setup your TopicID and Subscription ID
+	//TODO: ID's needs to be replaced here
 	topicID := uuid.MustParse("00000000-0000-0000-0000-000000000000")
 	subscriptionID := uuid.MustParse("00000000-0000-0000-0000-000000000000")
 
@@ -30,7 +30,6 @@ func pull() {
 	subscriber := pubsub.NewSubscriber(topicID,
 		subscriptionID,
 		pubsub.WithHTTPRoundTripper(rt),
-		pubsub.WithHost("pubsub.eu01.onstackit.cloud"),
 	)
 
 	// Pull messages via subscription
@@ -38,11 +37,11 @@ func pull() {
 
 	log.Printf("Successfully pulled message: %v", pulledMessages)
 
-	// get your AckIDs and acknowledge them
+	// Get your AckIDs and acknowledge them
 	ackIDs := pulledMessages.GetAckIDs()
 	err = subscriber.Ack(context.Background(), ackIDs)
 
-	// get your NackIDs and not acknowledge them
+	// Get your NackIDs and not acknowledge them
 	nackIDs := pulledMessages.GetAckIDs()
 	err = subscriber.Nack(context.Background(), nackIDs)
 }

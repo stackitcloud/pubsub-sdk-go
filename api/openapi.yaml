@@ -1,4 +1,3 @@
-# For details see https://spec.openapis.org/oas/v3.0.3.html
 openapi: 3.0.3
 info:
   version: 1alpha.0.0
@@ -6,24 +5,18 @@ info:
   description: |
     This API provides endpoints for managing PubSubs.
 
-# For details see https://developers.stackit.schwarz/domains/core-platform/api-management/api-gateway/features/annotations/#x-stackit-api
 x-stackit-api:
   type: stackit
-# For details see https://developers.stackit.schwarz/domains/core-platform/api-management/api-gateway/features/annotations/#x-stackit-scope
 x-stackit-scope:
   visibility: private
-# For details see https://developers.stackit.schwarz/domains/core-platform/api-management/api-gateway/features/annotations/#x-stackit-sdk
 x-stackit-sdk:
   include: false
-# For details see https://developers.stackit.schwarz/domains/core-platform/api-management/api-gateway/features/annotations/#x-stackit-cors
 x-stackit-cors:
   allow_origins_default:
     - portal
     - backoffice
-# For details see https://developers.stackit.schwarz/domains/core-platform/api-management/api-gateway/features/annotations/#x-stackit-portal
 x-stackit-portal:
   cors: true
-# For details see https://developers.stackit.schwarz/domains/core-platform/api-management/api-gateway/features/annotations/#x-stackit-signer
 x-stackit-signer:
   audience:
     - pubsub.stackit.cloud
@@ -31,7 +24,6 @@ x-stackit-signer:
 servers:
   - url: https://{topicId}.api.pubsub-dp.eu01.dev.stackit.cloud
     description: Development endpoint in eu01.
-    # For details see https://developers.stackit.schwarz/domains/core-platform/api-management/api-gateway/features/annotations/#x-stackit-stage
     variables:
       topicId:
         description: The Topic UUID.
@@ -43,7 +35,6 @@ servers:
       topicId:
         description: The Topic UUID.
         default: "00000000-0000-0000-0000-000000000000"
-    # For details see https://developers.stackit.schwarz/domains/core-platform/api-management/api-gateway/features/annotations/#x-stackit-stage
     x-stackit-stage: qa-eu01
   - url: https://{topicId}.api.pubsub-dp.eu01.stackit.cloud
     description: Production endpoint in eu01.
@@ -51,7 +42,6 @@ servers:
       topicId:
         description: The Topic UUID.
         default: "00000000-0000-0000-0000-000000000000"
-    # For details see https://developers.stackit.schwarz/domains/core-platform/api-management/api-gateway/features/annotations/#x-stackit-stage
     x-stackit-stage: prd-eu01
 
 paths:
@@ -255,7 +245,6 @@ components:
           format: byte
           description: Base64 encoded message payload.
     publishMessageToTopicRequest:
-      # For details see https://developers.stackit.schwarz/domains/core-platform/api-management/api-gateway/features/annotations/#x-stackit-sdk
       x-stackit-sdk:
         schema-name: publishMessageToTopicPayload
       required:

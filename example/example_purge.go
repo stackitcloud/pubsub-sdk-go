@@ -12,22 +12,22 @@ import (
 
 //nolint:all
 func purge() {
-	// Round Tripper Declaration
+
+	// Authentication with STACKIT SDK - Returns a Round-Tripper
 	rt, err := auth.DefaultAuth(&config.Configuration{
 		ServiceAccountKey: "./service-account-key.json",
-		TokenCustomUrl:    "https://service-account.api.stackit.cloud/token",
 	})
 	if err != nil {
 		log.Printf("Error creating authentication token: %v", err)
 	}
 
-	//setup your TopicID and Subscription ID
+	// Setup your TopicID and Subscription ID
+	//TODO: ID needs to be replaced here
 	topicID := uuid.MustParse("00000000-0000-0000-0000-000000000000")
 
 	// Declare publisher
 	publisher := pubsub.NewPublisher(topicID,
 		pubsub.WithHTTPRoundTripper(rt),
-		pubsub.WithHost("pubsub.eu01.onstackit.cloud"),
 	)
 
 	err = publisher.Purge(context.Background())

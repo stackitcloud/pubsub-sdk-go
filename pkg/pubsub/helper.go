@@ -2,7 +2,7 @@ package pubsub
 
 import "encoding/base64"
 
-func ConvertToBase64(strings ...string) [][]byte {
+func StringsToBase64(strings ...string) [][]byte {
 	result := make([][]byte, len(strings))
 
 	for i, string := range strings {

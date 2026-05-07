@@ -1,6 +1,6 @@
 # STACKIT PubSub Go SDK
 
-Welcome to the PubSub Dataplane API SDK.
+Welcome to the PubSub Dataplane SDK.
 It provides a convenient way to interact with STACKIT PubSub topics and subscriptions for publishing and consuming messages.
 This guide will walk you through setting up clients, authenticating your requests, and performing common operations like publishing and pulling messages.
 
@@ -18,22 +18,28 @@ Before you begin, you will need the following:
 To use the SDK in your project, install it using `go get`:
 
 ```bash
-go get [github.com/stackitcloud/pubsub-sdk-go.git](https://github.com/stackitcloud/pubsub-sdk-go.git)
+go get github.com/stackitcloud/pubsub-sdk-go.git
 ```
 
 ### 2. Usage
 
-To interact with the PubSub API, you need to create and configure a `Publisher` or a `Subscriber`.
-The recommended way to handle authentication is by using a `RoundTripper` from the core STACKIT Go SDK, which automatically manages service account tokens.
+To interact with the PubSub Dataplane, you need to create and configure a `Publisher` or a `Subscriber`.
+You will find an example Folder in the root directory, with ready to copy examples for using the SDK even easier.
 
-Both clients share the same configuration options. You will need to provide the configured `RoundTripper` and the Host (Environment) URI.
+The recommended way to handle authentication is by using a `RoundTripper` from the core STACKIT Go SDK, which automatically manages service account tokens.
+For initiating the Roundtripper you need a service Account, this you can get in the STACKIT Portal.
+To authenticate against the STACKIT CLI please take a look at the [Dokumentation]{https://github.com/stackitcloud/stackit-cli/blob/main/docs/stackit_auth_get-access-token.md}.
 
 ```go
-topicID := uuid.MustParse("00000000-0000-0000-0000-000000000000")
+roundTripper, err := auth.DefaultAuth(&config.Configuration{
+    ServiceAccountKey: "./service-account-key.json",
+})
+if err != nil {
+    log.Printf("Error creating authentication token: %v", err)
+}
 
 publisher := pubsub.NewPublisher(topicID,
-    pubsub.WithHTTPRoundTripper(yourRoundTripper),
-    pubsub.WithHost(host),
+    pubsub.WithHTTPRoundTripper(roundTripper),
 )
 ```
 
@@ -59,10 +65,8 @@ slogLogger := slog.New(slog.NewJSONHandler(os.Stdout, opts))
 
 // Pass the slog.Logger to the publisher or subscriber
 topicID := uuid.MustParse("00000000-0000-0000-0000-000000000000")
-
 publisher := pubsub.NewPublisher(topicID,
-    pubsub.WithHTTPRoundTripper(yourRoundTripper),
-    pubsub.WithHost(host),
+    pubsub.WithHTTPRoundTripper(roundTripper),
     pubsub.WithLogger(slogLogger),
 )
 ```
@@ -72,12 +76,12 @@ publisher := pubsub.NewPublisher(topicID,
 ### 4. Using Methods
 
 Once you have configured your clients, you can send messages to a topic or consume them from a subscription.
-To consume messages, you Pull them, process them, and `Ack` (acknowledge) them to remove them from the subscription.
+To consume messages, you Pull them, process them, and `Ack` (acknowledge) them.
 
 ```go
 // Publish
 topicID := uuid.MustParse("00000000-0000-0000-0000-000000000000")
-publisher := pubsub.NewPublisher(topicID, pubsub.WithHTTPRoundTripper(yourRoundTripper))
+publisher := pubsub.NewPublisher(topicID, pubsub.WithHTTPRoundTripper(roundTripper))
 
 messages := [][]byte{
     []byte("Hello, PubSub!"),
@@ -86,7 +90,7 @@ messageIDs, err := publisher.Publish(ctx, messages)
 
 // Pull
 subscriptionID := uuid.MustParse("00000000-0000-0000-0000-000000000000")
-subscriber := pubsub.NewSubscriber(topicID, subscriptionID, pubsub.WithHTTPRoundTripper(yourRoundTripper))
+subscriber := pubsub.NewSubscriber(topicID, subscriptionID, pubsub.WithHTTPRoundTripper(roundTripper))
 
 pulledMessages, err := subscriber.Pull(ctx, pubsub.WithMaxMessages(10))
 
