@@ -18,7 +18,7 @@ Before you begin, you will need the following:
 To use the SDK in your project, install it using `go get`:
 
 ```bash
-go get github.com/stackitcloud/pubsub-sdk-go.git
+go get github.com/stackitcloud/pubsub-sdk-go
 ```
 
 ### 2. Usage

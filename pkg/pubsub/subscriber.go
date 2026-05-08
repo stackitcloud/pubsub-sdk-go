@@ -10,7 +10,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/google/uuid"
 
-	"github.com/stackitcloud/pubsub-sdk-go.git/pkg/pubsub/api"
+	"github.com/stackitcloud/pubsub-sdk-go/pkg/pubsub/api"
 )
 
 type Subscriber struct {

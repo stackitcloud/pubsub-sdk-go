@@ -1,4 +1,4 @@
-module github.com/stackitcloud/pubsub-sdk-go.git
+module github.com/stackitcloud/pubsub-sdk-go
 
 go 1.26.0
 
