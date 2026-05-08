@@ -7,7 +7,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/stackitcloud/pubsub-sdk-go.git/pkg/pubsub"
+	"github.com/stackitcloud/pubsub-sdk-go/pkg/pubsub"
 )
 
 var _ = Describe("publish a message", func() {
