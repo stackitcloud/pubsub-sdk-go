@@ -133,7 +133,3 @@ if err != nil {
     log.Fatalf("An unexpected error occurred: %v", err)
 }
 ```
-
-### 6. Codeowners
-
-Codeowners of this PubSub Dataplane SDK are Kevin Sussbauer, Paul Grossmann, Selina Fehn, Ferdinand Linnenberg, and Christoph Schumacher.
