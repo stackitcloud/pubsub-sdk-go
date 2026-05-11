@@ -15,14 +15,14 @@ var _ = Describe("Acknowledge messages", func() {
 	var AckIDs []string
 
 	BeforeEach(func(ctx context.Context) {
-		publisher := pubsub.NewPublisher(topicId, pubsub.WithHTTPRoundTripper(rt))
+		publisher := pubsub.NewPublisher(topicId, pubsub.WithHTTPRoundTripper(rt), pubsub.WithHost("pubsub.eu01.qa.onstackit.cloud"))
 		messagesToPublish := [][]byte{
 			[]byte("test1"),
 		}
 		_, err := publisher.Publish(ctx, messagesToPublish)
 		Expect(err).ToNot(HaveOccurred())
 
-		subscriber := pubsub.NewSubscriber(topicId, subscriptionId, pubsub.WithHTTPRoundTripper(rt))
+		subscriber := pubsub.NewSubscriber(topicId, subscriptionId, pubsub.WithHTTPRoundTripper(rt), pubsub.WithHost("pubsub.eu01.qa.onstackit.cloud"))
 		pulledMessages, err := subscriber.Pull(ctx, pubsub.WithMaxMessages(1))
 		Expect(err).ToNot(HaveOccurred())
 		Expect(pulledMessages).ToNot(BeEmpty())
@@ -32,7 +32,7 @@ var _ = Describe("Acknowledge messages", func() {
 
 	Context("acknowledging messages", func() {
 		It("should acknowledge a single message", func(ctx context.Context) {
-			subscriber := pubsub.NewSubscriber(topicId, subscriptionId, pubsub.WithHTTPRoundTripper(rt))
+			subscriber := pubsub.NewSubscriber(topicId, subscriptionId, pubsub.WithHTTPRoundTripper(rt), pubsub.WithHost("pubsub.eu01.qa.onstackit.cloud"))
 			ackId := AckIDs[0]
 
 			err := subscriber.Ack(ctx, []string{ackId})
@@ -40,7 +40,7 @@ var _ = Describe("Acknowledge messages", func() {
 		})
 
 		It("should acknowledge multiple messages", func(ctx context.Context) {
-			subscriber := pubsub.NewSubscriber(topicId, subscriptionId, pubsub.WithHTTPRoundTripper(rt))
+			subscriber := pubsub.NewSubscriber(topicId, subscriptionId, pubsub.WithHTTPRoundTripper(rt), pubsub.WithHost("pubsub.eu01.qa.onstackit.cloud"))
 
 			err := subscriber.Ack(ctx, AckIDs)
 			Expect(err).ToNot(HaveOccurred())
@@ -49,7 +49,7 @@ var _ = Describe("Acknowledge messages", func() {
 
 	Context("not acknowledging messages", func() {
 		It("should not acknowledge a single message", func(ctx context.Context) {
-			subscriber := pubsub.NewSubscriber(topicId, subscriptionId, pubsub.WithHTTPRoundTripper(rt))
+			subscriber := pubsub.NewSubscriber(topicId, subscriptionId, pubsub.WithHTTPRoundTripper(rt), pubsub.WithHost("pubsub.eu01.qa.onstackit.cloud"))
 			nackId := AckIDs[0]
 
 			err := subscriber.Nack(ctx, []string{nackId})
@@ -57,7 +57,7 @@ var _ = Describe("Acknowledge messages", func() {
 		})
 
 		It("should not Acknowledge multiple messages", func(ctx context.Context) {
-			subscriber := pubsub.NewSubscriber(topicId, subscriptionId, pubsub.WithHTTPRoundTripper(rt))
+			subscriber := pubsub.NewSubscriber(topicId, subscriptionId, pubsub.WithHTTPRoundTripper(rt), pubsub.WithHost("pubsub.eu01.qa.onstackit.cloud"))
 
 			err := subscriber.Nack(ctx, AckIDs)
 			Expect(err).ToNot(HaveOccurred())
@@ -68,7 +68,7 @@ var _ = Describe("Acknowledge messages", func() {
 var _ = Describe("Pull messages", func() {
 	Context("pulling messages", func() {
 		BeforeEach(func(ctx context.Context) {
-			publisher := pubsub.NewPublisher(topicId, pubsub.WithHTTPRoundTripper(rt))
+			publisher := pubsub.NewPublisher(topicId, pubsub.WithHTTPRoundTripper(rt), pubsub.WithHost("pubsub.eu01.qa.onstackit.cloud"))
 			messagesToPublish := [][]byte{
 				[]byte("test1"),
 				[]byte("test2"),
@@ -79,7 +79,7 @@ var _ = Describe("Pull messages", func() {
 		})
 
 		It("no error is occurring", func(ctx context.Context) {
-			subscriber := pubsub.NewSubscriber(topicId, subscriptionId, pubsub.WithHTTPRoundTripper(rt))
+			subscriber := pubsub.NewSubscriber(topicId, subscriptionId, pubsub.WithHTTPRoundTripper(rt), pubsub.WithHost("pubsub.eu01.qa.onstackit.cloud"))
 			resp, err := subscriber.Pull(ctx, pubsub.WithMaxMessages(128))
 			Expect(resp).ToNot(BeNil())
 			Expect(err).ToNot(HaveOccurred())
@@ -87,7 +87,7 @@ var _ = Describe("Pull messages", func() {
 		It(
 			"should pull only one Message, MaxMessages is set to 1 but more messages will be available",
 			func(ctx context.Context) {
-				subscriber := pubsub.NewSubscriber(topicId, subscriptionId, pubsub.WithHTTPRoundTripper(rt))
+				subscriber := pubsub.NewSubscriber(topicId, subscriptionId, pubsub.WithHTTPRoundTripper(rt), pubsub.WithHost("pubsub.eu01.qa.onstackit.cloud"))
 				resp, _ := subscriber.Pull(ctx, pubsub.WithMaxMessages(1))
 				Expect(resp).To(HaveLen(1))
 				Expect(resp).ToNot(HaveLen(2))
@@ -99,7 +99,7 @@ var _ = Describe("Pull messages", func() {
 var _ = Describe("PullJob", func() {
 	BeforeEach(func(ctx context.Context) {
 		// making sure everything is empty, and acking everything, stopping when len = 0
-		subscriber := pubsub.NewSubscriber(topicId, subscriptionId, pubsub.WithHTTPRoundTripper(rt))
+		subscriber := pubsub.NewSubscriber(topicId, subscriptionId, pubsub.WithHTTPRoundTripper(rt), pubsub.WithHost("pubsub.eu01.qa.onstackit.cloud"))
 
 		Eventually(func(g Gomega) bool {
 			msgs, err := subscriber.Pull(ctx, pubsub.WithMaxMessages(13))
@@ -116,7 +116,7 @@ var _ = Describe("PullJob", func() {
 		}).WithTimeout(10 * time.Second).WithPolling(500 * time.Millisecond).Should(BeTrue())
 
 		// publishing test messages
-		publisher := pubsub.NewPublisher(topicId, pubsub.WithHTTPRoundTripper(rt))
+		publisher := pubsub.NewPublisher(topicId, pubsub.WithHTTPRoundTripper(rt), pubsub.WithHost("pubsub.eu01.qa.onstackit.cloud"))
 		messagesToPublish := [][]byte{
 			[]byte("testMessage"),
 			[]byte("testMessage2"),
@@ -127,7 +127,7 @@ var _ = Describe("PullJob", func() {
 
 	Context("using PullJobChan", func() {
 		It("should receive a message from channel", func(ctx context.Context) {
-			subscriber := pubsub.NewSubscriber(topicId, subscriptionId, pubsub.WithHTTPRoundTripper(rt))
+			subscriber := pubsub.NewSubscriber(topicId, subscriptionId, pubsub.WithHTTPRoundTripper(rt), pubsub.WithHost("pubsub.eu01.qa.onstackit.cloud"))
 
 			var receivedMessages pubsub.PullMessages
 			Eventually(func(g Gomega) {
@@ -148,7 +148,7 @@ var _ = Describe("PullJob", func() {
 
 	Context("using PullJobCallback", func() {
 		It("should invoke the callback with messages", func(ctx context.Context) {
-			subscriber := pubsub.NewSubscriber(topicId, subscriptionId, pubsub.WithHTTPRoundTripper(rt))
+			subscriber := pubsub.NewSubscriber(topicId, subscriptionId, pubsub.WithHTTPRoundTripper(rt), pubsub.WithHost("pubsub.eu01.qa.onstackit.cloud"))
 			ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 			defer cancel()
 
