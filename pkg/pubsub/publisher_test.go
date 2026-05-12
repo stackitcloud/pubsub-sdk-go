@@ -13,7 +13,7 @@ import (
 var _ = Describe("publish a message", func() {
 	Context("publish a message", func() {
 		It("should publish the message and return a message ID", func(ctx context.Context) {
-			publisher := pubsub.NewPublisher(topicId, pubsub.WithHTTPRoundTripper(rt), pubsub.WithHost("pubsub.eu01.qa.onstackit.cloud"))
+			publisher := pubsub.NewPublisher(topicId, pubsub.WithHTTPRoundTripper(rt), pubsub.WithHost(environment))
 			messages := [][]byte{
 				[]byte("Hello, Stackit!"),
 			}
@@ -28,8 +28,8 @@ var _ = Describe("publish a message", func() {
 
 	Context("Purging a topic", func() {
 		It("should successfully remove all messages from the topic", func(ctx context.Context) {
-			publisher := pubsub.NewPublisher(topicId, pubsub.WithHTTPRoundTripper(rt), pubsub.WithHost("pubsub.eu01.qa.onstackit.cloud"))
-			subscriber := pubsub.NewSubscriber(topicId, subscriptionId, pubsub.WithHTTPRoundTripper(rt), pubsub.WithHost("pubsub.eu01.qa.onstackit.cloud"))
+			publisher := pubsub.NewPublisher(topicId, pubsub.WithHTTPRoundTripper(rt), pubsub.WithHost(environment))
+			subscriber := pubsub.NewSubscriber(topicId, subscriptionId, pubsub.WithHTTPRoundTripper(rt), pubsub.WithHost(environment))
 
 			messagesToPublish := [][]byte{
 				[]byte("message-to-be-purged-1"),
