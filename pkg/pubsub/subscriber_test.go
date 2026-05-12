@@ -2,6 +2,7 @@ package pubsub_test
 
 import (
 	"context"
+	"encoding/base64"
 	"sync/atomic"
 	"time"
 
@@ -16,9 +17,8 @@ var _ = Describe("Acknowledge messages", func() {
 
 	BeforeEach(func(ctx context.Context) {
 		publisher := pubsub.NewPublisher(topicId, pubsub.WithHTTPRoundTripper(rt), pubsub.WithHost(environment))
-		messagesToPublish := [][]byte{
-			[]byte("test1"),
-		}
+		messagesToPublish := pubsub.StringsToBase64("test1")
+
 		_, err := publisher.Publish(ctx, messagesToPublish)
 		Expect(err).ToNot(HaveOccurred())
 
@@ -69,11 +69,8 @@ var _ = Describe("Pull messages", func() {
 	Context("pulling messages", func() {
 		BeforeEach(func(ctx context.Context) {
 			publisher := pubsub.NewPublisher(topicId, pubsub.WithHTTPRoundTripper(rt), pubsub.WithHost(environment))
-			messagesToPublish := [][]byte{
-				[]byte("test1"),
-				[]byte("test2"),
-				[]byte("test3"),
-			}
+			messagesToPublish := pubsub.StringsToBase64("test1", "test2", "test3")
+
 			_, err := publisher.Publish(ctx, messagesToPublish)
 			Expect(err).ToNot(HaveOccurred())
 		})
@@ -117,10 +114,8 @@ var _ = Describe("PullJob", func() {
 
 		// publishing test messages
 		publisher := pubsub.NewPublisher(topicId, pubsub.WithHTTPRoundTripper(rt), pubsub.WithHost(environment))
-		messagesToPublish := [][]byte{
-			[]byte("testMessage"),
-			[]byte("testMessage2"),
-		}
+		messagesToPublish := pubsub.StringsToBase64("testMessage", "testMessage2")
+
 		_, err := publisher.Publish(ctx, messagesToPublish)
 		Expect(err).ToNot(HaveOccurred())
 	})
@@ -140,8 +135,11 @@ var _ = Describe("PullJob", func() {
 			}).WithContext(ctx).Should(Succeed())
 
 			Expect(receivedMessages).To(HaveLen(1))
-			Expect(string(receivedMessages[0].Data)).To(Or(Equal("testMessage"), Equal("testMessage2")))
-			err := subscriber.Ack(ctx, receivedMessages.GetAckIDs())
+
+			decodedData, err := base64.StdEncoding.DecodeString(string(receivedMessages[0].Data))
+			Expect(err).ToNot(HaveOccurred())
+			Expect(string(decodedData)).To(Or(Equal("testMessage"), Equal("testMessage2")))
+			err = subscriber.Ack(ctx, receivedMessages.GetAckIDs())
 			Expect(err).ToNot(HaveOccurred())
 		})
 	})
@@ -156,8 +154,10 @@ var _ = Describe("PullJob", func() {
 			callback := func(ctx context.Context, messages pubsub.PullMessages) {
 				defer GinkgoRecover()
 				Expect(messages).To(HaveLen(1))
-				Expect(string(messages[0].Data)).To(Or(Equal("testMessage"), Equal("testMessage2")))
-				err := subscriber.Ack(ctx, messages.GetAckIDs())
+				decodedData, err := base64.StdEncoding.DecodeString(string(messages[0].Data))
+				Expect(err).ToNot(HaveOccurred())
+				Expect(string(decodedData)).To(Or(Equal("testMessage"), Equal("testMessage2")))
+				err = subscriber.Ack(ctx, messages.GetAckIDs())
 				Expect(err).ToNot(HaveOccurred())
 				callbackInvoked.Store(true)
 				cancel()
