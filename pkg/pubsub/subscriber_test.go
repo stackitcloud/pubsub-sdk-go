@@ -2,7 +2,6 @@ package pubsub_test
 
 import (
 	"context"
-	"encoding/base64"
 	"sync/atomic"
 	"time"
 
@@ -136,9 +135,9 @@ var _ = Describe("PullJob", func() {
 
 			Expect(receivedMessages).To(HaveLen(1))
 
-			decodedData, err := base64.StdEncoding.DecodeString(string(receivedMessages[0].Data))
+			decodedStrings, err := pubsub.Base64ToStrings(string(receivedMessages[0].Data))
 			Expect(err).ToNot(HaveOccurred())
-			Expect(string(decodedData)).To(Or(Equal("testMessage"), Equal("testMessage2")))
+			Expect(decodedStrings[0]).To(Or(Equal("testMessage"), Equal("testMessage2")))
 			err = subscriber.Ack(ctx, receivedMessages.GetAckIDs())
 			Expect(err).ToNot(HaveOccurred())
 		})
@@ -154,9 +153,9 @@ var _ = Describe("PullJob", func() {
 			callback := func(ctx context.Context, messages pubsub.PullMessages) {
 				defer GinkgoRecover()
 				Expect(messages).To(HaveLen(1))
-				decodedData, err := base64.StdEncoding.DecodeString(string(messages[0].Data))
+				decoded, err := pubsub.Base64ToStrings(string(messages[0].Data))
 				Expect(err).ToNot(HaveOccurred())
-				Expect(string(decodedData)).To(Or(Equal("testMessage"), Equal("testMessage2")))
+				Expect(decoded[0]).To(Or(Equal("testMessage"), Equal("testMessage2")))
 				err = subscriber.Ack(ctx, messages.GetAckIDs())
 				Expect(err).ToNot(HaveOccurred())
 				callbackInvoked.Store(true)
