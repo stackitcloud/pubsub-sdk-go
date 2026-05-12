@@ -21,6 +21,7 @@ import (
 )
 
 var (
+	environment    string
 	topicId        uuid.UUID
 	subscriptionId uuid.UUID
 	spec           Specification
@@ -72,6 +73,7 @@ var _ = BeforeSuite(func() {
 
 	topicId = spec.TopicId
 	subscriptionId = spec.SubscriptionId
+	environment = spec.Environment
 
 	rt, err = auth.DefaultAuth(&config.Configuration{
 		ServiceAccountKey: spec.ServiceAccountToken,
