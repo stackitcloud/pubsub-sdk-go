@@ -1,0 +1,89 @@
+name: CI / CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - pipeline
+    tags:
+      - 'v*.*'
+  workflow_dispatch:
+
+jobs:
+  test-and-resources:
+    name: Test & Resource Management
+    runs-on: ubuntu-latest
+    env:
+      ENVIRONMENT: pubsub.eu01.qa.onstackit.cloud
+      TOKEN_CUSTOM_URI: https://service-account.api.qa.stackit.cloud/token
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+
+      - name: Make Scripts Executable
+        run: chmod +x ./scripts/*.sh
+
+      - name: Add Binaries to PATH
+        run: echo "$PWD/bin" >> $GITHUB_PATH
+
+      - name: Load Key from GitHub Secrets
+        run: |
+          echo '${{ secrets.STACKIT_SERVICE_ACCOUNT_KEY }}' > $RUNNER_TEMP/service_account_key.json
+
+      - name: Set up Stackit CLI
+        run: |
+          echo "Stackit CLI Installation"
+          sudo snap install stackit --classic
+
+      - name: Import QA Profile and Login
+        if: always()
+        run: |
+          echo '${{ secrets.STACKIT_QA_ENV_JSON }}' > $RUNNER_TEMP/qa-env.json
+          
+            if stackit config profile list | grep -q "pubsub-qa"; then
+              echo "Profile 'pubsub-qa' found, deleting it."
+              stackit config profile unset -y || true
+              stackit config profile delete pubsub-qa -y --verbosity debug
+              echo "deleted"
+            else
+              echo "Profile 'pubsub-qa' not found, skipping deletion."
+            fi
+            
+            echo "pubsub-qa should been removed. Creating..."
+            stackit config profile import -c "@$RUNNER_TEMP/qa-env.json" --name pubsub-qa
+            stackit config profile set pubsub-qa
+            stackit auth activate-service-account --service-account-key-path "$RUNNER_TEMP/service_account_key.json"
+
+      - name: Create PubSub Topic and Subscription
+        run: ./scripts/create-pubsub-resources.sh
+        env:
+          REPO_ROOT: ${{ github.workspace }}
+          SA_KEY_PATH: ${{ runner.temp }}/service_account_key.json
+
+      - name: Run Unit Tests
+        run: make test ENABLE_TEST_COVERAGE=true
+        env:
+          TOPIC_ID: ${{ env.TOPIC_ID }}
+          SUBSCRIPTION_ID: ${{ env.SUBSCRIPTION_ID }}
+          ENVIRONMENT: ${{ env.ENVIRONMENT }}
+          TOKEN_CUSTOM_URI: ${{ env.TOKEN_CUSTOM_URI }}
+          SERVICE_ACCOUNT_TOKEN: ${{ secrets.STACKIT_SERVICE_ACCOUNT_KEY }}
+          TOKEN: ${{ secrets.TOKEN }}
+
+      - name: Cleanup - Delete STACKIT Resources
+        if: always()
+        run: |
+          cp $RUNNER_TEMP/service_account_key.json key.json
+          ./scripts/delete-pubsub-resources.sh
+
+      - name: Delete QA Profile
+        if: always()
+        run: stackit config profile delete pubsub-qa -y

@@ -76,7 +76,8 @@ func (b *pullJob) runLoop(ctx context.Context, handler func(context.Context, Pul
 		case <-ticker.C:
 			messages, err := b.subscription.Pull(ctx, WithMaxMessages(b.maxPullMessages))
 			if err != nil { //nolint:nestif
-				if sdkErr, ok := errors.AsType[SDKError](err); ok {
+				var sdkErr SDKError          // Declare the target variable
+				if errors.As(err, &sdkErr) { // Pass a pointer to sdkErr
 					if !sdkErr.IsTransient() {
 						// Only exit the loop if the users error handler returns false
 						if !b.errHandler(err) {
