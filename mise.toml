@@ -1,11 +1,11 @@
 [tools]
-go = "1.26.2"
+go = "1.25.0" # Make sure this matches the go.mod
 "go:gitlab.com/backbone/changelog/cmd/changelog" = "v1.1.0"
 ginkgo = "2.28.1"
 "go:github.com/axw/gocov/gocov" = "v1.1.0"
 "go:github.com/AlekSi/gocov-xml" = "v1.2.0"
 golangci-lint = "2.8.0"
-oapi-codegen = "v2.6.0"
+"go:github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen" = "v2.7.0"
 
 [settings]
 # The go backend is experimental

@@ -1,13 +1,13 @@
 module github.com/stackitcloud/pubsub-sdk-go
 
-go 1.25.0
+go 1.25.0 // Make sure this matches the version specified in the mise.toml
 
 require (
 	github.com/go-logr/logr v1.4.3
 	github.com/google/uuid v1.6.0
 	github.com/joho/godotenv v1.5.1
 	github.com/kelseyhightower/envconfig v1.4.0
-	github.com/oapi-codegen/runtime v1.3.1
+	github.com/oapi-codegen/runtime v1.4.0
 	github.com/onsi/ginkgo/v2 v2.28.1
 	github.com/onsi/gomega v1.39.1
 	github.com/stackitcloud/stackit-sdk-go/core v0.22.0
