@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
+	"sync"
 
 	"github.com/go-logr/logr"
 	"github.com/google/uuid"
@@ -19,6 +20,7 @@ type Subscriber struct {
 	dataplane      *api.ClientWithResponses
 	topicUrl       url.URL
 	httpClient     *http.Client
+	wg             sync.WaitGroup
 }
 
 func NewSubscriber(topicId uuid.UUID, subscriptionId uuid.UUID, opts ...Option) *Subscriber {
@@ -167,4 +169,8 @@ func (s *Subscriber) Pull(ctx context.Context, opts ...PullOption) (PullMessages
 		"ack_ids", messages.GetAckIDs(),
 	)
 	return messages, nil
+}
+
+func (s *Subscriber) Wait() {
+	s.wg.Wait()
 }
