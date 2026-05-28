@@ -3,13 +3,44 @@ name: CI / CD Pipeline
 on:
   push:
     branches:
-      - main
-      - pipeline
+      - *
     tags:
       - 'v*.*'
+  pull_request:
+    branches:
+      - *
   workflow_dispatch:
 
 jobs:
+  check-generated-and-lint-code:
+    name: Check Generated files and lint Code
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+
+      - name: Run Make Generate
+        run: make generate
+
+      - name: Check for Uncommitted Changes
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "::error::Files were modified after running 'make generate'. Please run 'make generate' locally and commit the changes."
+            git status
+            git diff
+            exit 1
+          else
+            echo "Generated code is up to date!"
+          fi
+
+      - name: Run Make Prepare
+        run: make prepare
+
   test-and-resources:
     name: Test & Resource Management
     runs-on: ubuntu-latest
@@ -56,7 +87,7 @@ jobs:
             else
               echo "Profile 'pubsub-qa' not found, skipping deletion."
             fi
-            
+                      
             echo "pubsub-qa should been removed. Creating..."
             stackit config profile import -c "@$RUNNER_TEMP/qa-env.json" --name pubsub-qa
             stackit config profile set pubsub-qa
