@@ -24,9 +24,6 @@ jobs:
         with:
           go-version-file: 'go.mod'
 
-      - name: Make Scripts Executable
-        run: chmod +x ./scripts/*.sh
-
       - name: Run Make Generate
         run: make generate
 
@@ -61,12 +58,6 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version-file: 'go.mod'
-
-      - name: Make Scripts Executable
-        run: chmod +x ./scripts/*.sh
-
-      - name: Add Binaries to PATH
-        run: echo "$PWD/bin" >> $GITHUB_PATH
 
       - name: Load Key from GitHub Secrets
         run: |
