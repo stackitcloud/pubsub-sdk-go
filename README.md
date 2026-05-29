@@ -28,7 +28,7 @@ You will find an [example Folder](./example) in the root directory, with ready t
 
 The recommended way to handle authentication is by using a `RoundTripper` from the core STACKIT Go SDK, which automatically manages service account tokens.
 For initiating the Roundtripper you need a service Account, this you can get in the STACKIT Portal.
-To authenticate against the STACKIT CLI please take a look at the [Dokumentation]{https://github.com/stackitcloud/stackit-cli/blob/main/docs/stackit_auth_get-access-token.md}.
+To authenticate against the STACKIT CLI please take a look at the [Documentation](https://github.com/stackitcloud/stackit-cli/blob/main/docs/stackit_auth_get-access-token.md).
 
 ```go
 roundTripper, err := auth.DefaultAuth(&config.Configuration{
