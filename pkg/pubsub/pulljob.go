@@ -111,9 +111,9 @@ func (s *Subscriber) PullJobCallback(
 	}
 
 	job := newPullJob(s, opts)
-	go func() {
+	s.wg.Go(func() {
 		job.runLoop(ctx, callback)
-	}()
+	})
 
 	s.logger.Info(
 		"new pull callback job created",
@@ -127,7 +127,7 @@ func (s *Subscriber) PullJobChan(ctx context.Context, opts ...PullJobOption) (<-
 	job := newPullJob(s, opts)
 	out := make(chan PullMessages, job.bufferSize)
 
-	go func() {
+	s.wg.Go(func() {
 		defer close(out)
 
 		adapter := func(innerCtx context.Context, msgs PullMessages) {
@@ -138,7 +138,7 @@ func (s *Subscriber) PullJobChan(ctx context.Context, opts ...PullJobOption) (<-
 		}
 
 		job.runLoop(ctx, adapter)
-	}()
+	})
 
 	s.logger.Info(
 		"new pull job channel created",

@@ -146,6 +146,7 @@ var _ = Describe("PullJob", func() {
 	Context("using PullJobCallback", func() {
 		It("should invoke the callback with messages", func(ctx context.Context) {
 			subscriber := pubsub.NewSubscriber(topicId, subscriptionId, pubsub.WithHTTPRoundTripper(rt), pubsub.WithHost(environment))
+			defer subscriber.Wait()
 			ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 			defer cancel()
 
