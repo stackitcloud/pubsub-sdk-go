@@ -22,7 +22,7 @@ jobs:
 
       - name: Create GitHub Release
         env:
-          GITHUB_TOKEN: ${{ secrets.TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release create ${{ inputs.version }} \
             --title "Release ${{ inputs.version }}" \
