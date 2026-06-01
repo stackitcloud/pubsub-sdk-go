@@ -35,7 +35,7 @@ roundTripper, err := auth.DefaultAuth(&config.Configuration{
     ServiceAccountKeyPath: "./service-account-key.json",
 })
 if err != nil {
-    log.Printf("Error creating authentication token: %v", err)
+    log.Fatalf("Error creating authentication token: %v", err)
 }
 
 publisher := pubsub.NewPublisher(topicID,
