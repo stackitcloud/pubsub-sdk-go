@@ -12,13 +12,12 @@ import (
 
 //nolint:all
 func publish() {
-
 	// Authentication with STACKIT SDK - Returns a Round-Tripper
 	rt, err := auth.DefaultAuth(&config.Configuration{
 		ServiceAccountKeyPath: "./service-account-key.json",
 	})
 	if err != nil {
-		log.Printf("Error creating authentication token: %v", err)
+		log.Fatalf("Error creating authentication token: %v", err)
 	}
 
 	// Setup your Topic ID
@@ -39,7 +38,7 @@ func publish() {
 		message,
 	)
 	if err != nil {
-		log.Printf("Error publishing message: %v", err)
+		log.Fatalf("Error publishing message: %v", err)
 	}
 
 	log.Print("Successfully published messages")
