@@ -116,7 +116,8 @@ var _ = Describe("PullJob", func() {
 			jobChan, err := subscriber.PullJobChan(ctx, pubsub.WithInterval(100*time.Millisecond))
 			Expect(err).ToNot(HaveOccurred())
 
-			receivedMessages := <-jobChan
+			var receivedMessages pubsub.PullMessages
+			Eventually(jobChan, "5s").Should(Receive(&receivedMessages))
 			Expect(receivedMessages).To(HaveLen(1))
 
 			decodedStrings, err := pubsub.Base64ToStrings(string(receivedMessages[0].Data))
