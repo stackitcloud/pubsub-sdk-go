@@ -12,13 +12,12 @@ import (
 
 //nolint:all
 func purge() {
-
 	// Authentication with STACKIT SDK - Returns a Round-Tripper
 	rt, err := auth.DefaultAuth(&config.Configuration{
 		ServiceAccountKeyPath: "./service-account-key.json",
 	})
 	if err != nil {
-		log.Printf("Error creating authentication token: %v", err)
+		log.Fatalf("Error creating authentication token: %v", err)
 	}
 
 	// Setup your TopicID and Subscription ID
@@ -31,5 +30,7 @@ func purge() {
 	)
 
 	err = publisher.Purge(context.Background())
-
+	if err != nil {
+		log.Fatalf("Error purging topic: %v", err)
+	}
 }
