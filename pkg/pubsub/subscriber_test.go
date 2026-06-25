@@ -80,6 +80,12 @@ var _ = Describe("Pull messages", func() {
 			Expect(resp).ToNot(BeNil())
 			Expect(err).ToNot(HaveOccurred())
 		})
+		It("should pull messages with long pull duration set", func(ctx context.Context) {
+			subscriber := pubsub.NewSubscriber(topicId, subscriptionId, pubsub.WithHTTPRoundTripper(rt), pubsub.WithHost(environment))
+			resp, err := subscriber.Pull(ctx, pubsub.WithMaxMessages(128), pubsub.WithLongPullDuration(500))
+			Expect(err).ToNot(HaveOccurred())
+			Expect(resp).ToNot(BeNil())
+		})
 		It(
 			"should pull only one Message, MaxMessages is set to 1 but more messages will be available",
 			func(ctx context.Context) {
@@ -118,6 +124,32 @@ var _ = Describe("PullJob", func() {
 
 			var receivedMessages pubsub.PullMessages
 			Eventually(jobChan, "5s").Should(Receive(&receivedMessages))
+			Expect(receivedMessages).To(HaveLen(1))
+
+			decodedStrings, err := pubsub.Base64ToStrings(string(receivedMessages[0].Data))
+			Expect(err).ToNot(HaveOccurred())
+			Expect(decodedStrings[0]).To(Equal("testMessage"))
+			err = subscriber.Ack(ctx, receivedMessages.GetAckIDs())
+			Expect(err).ToNot(HaveOccurred())
+
+			cancel()
+			subscriber.Wait()
+		})
+
+		It("should receive a message from channel with long pull duration set", func(ctx context.Context) {
+			subscriber := pubsub.NewSubscriber(topicId, subscriptionId, pubsub.WithHTTPRoundTripper(rt), pubsub.WithHost(environment))
+
+			ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+			defer cancel()
+
+			jobChan, err := subscriber.PullJobChan(ctx,
+				pubsub.WithInterval(100*time.Millisecond),
+				pubsub.WithPullLongPullDuration(500),
+			)
+			Expect(err).ToNot(HaveOccurred())
+
+			var receivedMessages pubsub.PullMessages
+			Eventually(jobChan, "10s").Should(Receive(&receivedMessages))
 			Expect(receivedMessages).To(HaveLen(1))
 
 			decodedStrings, err := pubsub.Base64ToStrings(string(receivedMessages[0].Data))

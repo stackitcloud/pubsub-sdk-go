@@ -105,6 +105,16 @@ paths:
             minimum: 1
             maximum: 32
             default: 16
+        - name: PubSub-Long-Pull-Duration
+          in: header
+          description: The maximum amount of milliseconds to keep an connection open, awaiting a new message on the server.
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 100
+            maximum: 5000
+            default: 0
       responses:
         '200':
           description: Messages pulled successfully.

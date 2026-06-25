@@ -121,7 +121,8 @@ func toSdkMessages(m []api.Message, subscription *Subscriber) PullMessages {
 }
 
 type pullOptions struct {
-	maxMessages int32
+	maxMessages     int32
+	longPullDuration *int32
 }
 
 type PullOption func(*pullOptions)
@@ -129,6 +130,12 @@ type PullOption func(*pullOptions)
 func WithMaxMessages(maximum int32) PullOption {
 	return func(opts *pullOptions) {
 		opts.maxMessages = maximum
+	}
+}
+
+func WithLongPullDuration(milliseconds int32) PullOption {
+	return func(opts *pullOptions) {
+		opts.longPullDuration = &milliseconds
 	}
 }
 
@@ -142,7 +149,8 @@ func (s *Subscriber) Pull(ctx context.Context, opts ...PullOption) (PullMessages
 	}
 
 	reqBody := api.PullMessagesParams{
-		PubSubMaxMessages: &cfg.maxMessages,
+		PubSubMaxMessages:      &cfg.maxMessages,
+		PubSubLongPullDuration: cfg.longPullDuration,
 	}
 
 	s.logger.V(4).Info("pulling messages",
