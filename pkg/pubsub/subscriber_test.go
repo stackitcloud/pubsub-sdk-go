@@ -2,6 +2,7 @@ package pubsub_test
 
 import (
 	"context"
+	"errors"
 	"sync/atomic"
 	"time"
 
@@ -62,6 +63,34 @@ var _ = Describe("Acknowledge messages", func() {
 			Expect(err).ToNot(HaveOccurred())
 		})
 	})
+})
+
+var _ = Describe("WithLongPullDuration validation", func() {
+	DescribeTable("invalid durations return ConfigurationError",
+		func(ctx context.Context, ms int32) {
+			subscriber := pubsub.NewSubscriber(topicId, subscriptionId)
+			_, err := subscriber.Pull(ctx, pubsub.WithLongPullDuration(ms))
+			Expect(err).To(HaveOccurred())
+			var cfgErr *pubsub.ConfigurationError
+			Expect(errors.As(err, &cfgErr)).To(BeTrue())
+		},
+		Entry("below minimum", int32(50)),
+		Entry("above maximum", int32(6000)),
+	)
+
+	DescribeTable("valid durations do not return ConfigurationError",
+		func(ms int32) {
+			subscriber := pubsub.NewSubscriber(topicId, subscriptionId)
+			_, err := subscriber.Pull(context.Background(), pubsub.WithLongPullDuration(ms))
+			if err != nil {
+				var cfgErr *pubsub.ConfigurationError
+				Expect(errors.As(err, &cfgErr)).To(BeFalse(), "expected no ConfigurationError for ms=%d", ms)
+			}
+		},
+		Entry("disabled (0)", int32(0)),
+		Entry("minimum (100)", int32(100)),
+		Entry("maximum (5000)", int32(5000)),
+	)
 })
 
 var _ = Describe("Pull messages", func() {

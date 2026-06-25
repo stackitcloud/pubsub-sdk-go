@@ -148,9 +148,21 @@ func (s *Subscriber) Pull(ctx context.Context, opts ...PullOption) (PullMessages
 		opt(cfg)
 	}
 
+	// 0 and nil both mean disabled; any other value must be in [100, 5000].
+	var longPullDuration *int32
+	if cfg.longPullDuration != nil && *cfg.longPullDuration != 0 {
+		ms := *cfg.longPullDuration
+		if ms < 100 || ms > 5000 {
+			return nil, &ConfigurationError{
+				Msg: fmt.Sprintf("long_pull_duration must be 0 (disabled) or 100–5000, got %d", ms),
+			}
+		}
+		longPullDuration = &ms
+	}
+
 	reqBody := api.PullMessagesParams{
 		PubSubMaxMessages:      &cfg.maxMessages,
-		PubSubLongPullDuration: cfg.longPullDuration,
+		PubSubLongPullDuration: longPullDuration,
 	}
 
 	s.logger.V(4).Info("pulling messages",
