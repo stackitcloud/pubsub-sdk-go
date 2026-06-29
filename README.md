@@ -92,7 +92,7 @@ subscriber := pubsub.NewSubscriber(topicID, subscriptionID, pubsub.WithHTTPRound
 pulledMessages, err := subscriber.Pull(ctx, pubsub.WithMaxMessages(10))
 
 for i := 0; i < len(pulledMessages); i++ {
-    msg, err := pulledMessages[0].AsString()
+    msg, err := pulledMessages[i].AsString()
     if err != nil {
         log.Fatalf("Error converting message to string: %v", err)
     }
