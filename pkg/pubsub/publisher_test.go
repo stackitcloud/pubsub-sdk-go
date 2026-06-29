@@ -14,9 +14,8 @@ var _ = Describe("publish a message", func() {
 	Context("publish a message", func() {
 		It("should publish the message and return a message ID", func(ctx context.Context) {
 			publisher := pubsub.NewPublisher(topicId, pubsub.WithHTTPRoundTripper(rt), pubsub.WithHost(environment))
-			messages := pubsub.StringsToBase64("Hello, Stackit!")
 
-			messageIDs, err := publisher.Publish(ctx, messages)
+			messageIDs, err := publisher.PublishStrings(ctx, "Hello, Stackit!")
 
 			Expect(err).ToNot(HaveOccurred())
 			Expect(messageIDs).ToNot(BeNil())
@@ -28,9 +27,8 @@ var _ = Describe("publish a message", func() {
 		It("should successfully remove all messages from the topic", func(ctx context.Context) {
 			publisher := pubsub.NewPublisher(topicId, pubsub.WithHTTPRoundTripper(rt), pubsub.WithHost(environment))
 			subscriber := pubsub.NewSubscriber(topicId, subscriptionId, pubsub.WithHTTPRoundTripper(rt), pubsub.WithHost(environment))
-			messagesToPublish := pubsub.StringsToBase64("message-to-be-purged-1", "message-to-be-purged-2")
 
-			_, err := publisher.Publish(ctx, messagesToPublish)
+			_, err := publisher.PublishStrings(ctx, "message-to-be-purged-1", "message-to-be-purged-2")
 			Expect(err).ToNot(HaveOccurred())
 
 			Eventually(func(g Gomega) {

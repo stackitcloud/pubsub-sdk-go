@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-func StringsToBase64(strings ...string) [][]byte {
+func stringsToBase64(strings ...string) [][]byte {
 	result := make([][]byte, len(strings))
 
 	for i, string := range strings {
@@ -15,15 +15,16 @@ func StringsToBase64(strings ...string) [][]byte {
 	return result
 }
 
-func Base64ToStrings(encodedStrings ...string) ([]string, error) {
+func base64ToStrings(encodedStrings ...[]byte) ([]string, error) {
 	result := make([]string, len(encodedStrings))
 
 	for i, s := range encodedStrings {
-		decodedBytes, err := base64.StdEncoding.DecodeString(s)
+		decodedBytes := make([]byte, base64.StdEncoding.DecodedLen(len(s)))
+		n, err := base64.StdEncoding.Decode(decodedBytes, s)
 		if err != nil {
 			return nil, fmt.Errorf("failed to decode string at index %d: %w", i, err)
 		}
-		result[i] = string(decodedBytes)
+		result[i] = string(decodedBytes[:n])
 	}
 
 	return result, nil

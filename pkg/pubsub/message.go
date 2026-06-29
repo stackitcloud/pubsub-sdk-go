@@ -14,8 +14,6 @@ type PullMessage struct {
 	DeliveryAttempts uint64
 }
 
-type PullMessages []PullMessage
-
 func (m *PullMessage) Ack(ctx context.Context) error {
 	return m.subscription.Ack(ctx, []string{m.AckID})
 }
@@ -30,4 +28,27 @@ func (m PullMessages) GetAckIDs() []string {
 		ids[i] = msg.AckID
 	}
 	return ids
+}
+
+func (m *PullMessage) AsString() (string, error) {
+	str, err := base64ToStrings(m.Data)
+	if err != nil {
+		return "", err
+	}
+	return str[0], nil
+}
+
+func (m *PullMessage) AsBytes() []byte {
+	return m.Data
+}
+
+type PullMessages []PullMessage
+
+func (m PullMessages) AsStrings() ([]string, error) {
+	strings := make([]string, 0, len(m))
+	for _, msg := range m {
+		str, _ := msg.AsString()
+		strings = append(strings, str)
+	}
+	return strings, nil
 }

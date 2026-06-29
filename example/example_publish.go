@@ -29,13 +29,10 @@ func publish() {
 		pubsub.WithHTTPRoundTripper(rt),
 	)
 
-	// Create a message to publish to the topic and encode it to base64 format
-	message := pubsub.StringsToBase64("Hello PubSub from example", "This is another message")
-
 	// Publish the messages to the topic using the publisher client
-	_, err = publisher.Publish(
+	_, err = publisher.PublishStrings(
 		context.Background(),
-		message,
+		"Hello PubSub from example", "This is another message",
 	)
 	if err != nil {
 		log.Fatalf("Error publishing message: %v", err)

@@ -49,6 +49,10 @@ func NewPublisher(topicId uuid.UUID, opts ...Option) *Publisher {
 	return publisher
 }
 
+func (p *Publisher) PublishStrings(ctx context.Context, messages ...string) ([]uint64, error) {
+	return p.Publish(ctx, stringsToBase64(messages...))
+}
+
 func (p *Publisher) Publish(ctx context.Context, messages [][]byte) ([]uint64, error) {
 	messagesToPublish := make([]api.PublishMessage, len(messages))
 	for i, msg := range messages {

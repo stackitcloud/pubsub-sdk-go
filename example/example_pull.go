@@ -38,6 +38,9 @@ func pull() {
 	}
 
 	log.Printf("Successfully pulled message: %v", pulledMessages)
+	for i := 0; i < len(pulledMessages); i++ {
+		log.Printf("Message [%d]: %s:", i, pulledMessages[0].Data)
+	}
 
 	// Get your AckIDs and acknowledge them
 	ackIDs := pulledMessages.GetAckIDs()
