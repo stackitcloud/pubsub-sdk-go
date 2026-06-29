@@ -154,7 +154,7 @@ func (s *Subscriber) Pull(ctx context.Context, opts ...PullOption) (PullMessages
 		ms := *cfg.longPullDuration
 		if ms < 100 || ms > 5000 {
 			return nil, &ConfigurationError{
-				Msg: fmt.Sprintf("long_pull_duration must between 0 (default) or between 100–5000, got %d", ms),
+				Msg: fmt.Sprintf("long_pull_duration must be 0 (default) or between 100–5000, got %d", ms),
 			}
 		}
 		longPullDuration = &ms
