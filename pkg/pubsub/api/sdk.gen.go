@@ -77,6 +77,9 @@ type SubscriptionId = openapi_types.UUID
 type PullMessagesParams struct {
 	// PubSubMaxMessages The maximum number of messages to pull.
 	PubSubMaxMessages *int32 `json:"PubSub-Max-Messages,omitempty"`
+
+	// PubSubLongPullDuration The maximum amount of milliseconds to keep an connection open, awaiting a new message on the server.
+	PubSubLongPullDuration *int32 `json:"PubSub-Long-Pull-Duration,omitempty"`
 }
 
 // PublishMessagesJSONRequestBody defines body for PublishMessages for application/json ContentType.
@@ -482,6 +485,17 @@ func NewPullMessagesRequest(server string, subscriptionId SubscriptionId, params
 			}
 
 			req.Header.Set("PubSub-Max-Messages", headerParam0)
+		}
+
+		if params.PubSubLongPullDuration != nil {
+			var headerParam1 string
+
+			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "PubSub-Long-Pull-Duration", *params.PubSubLongPullDuration, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "integer", Format: "int32"})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("PubSub-Long-Pull-Duration", headerParam1)
 		}
 
 	}
