@@ -83,16 +83,21 @@ To consume messages, you Pull them, process them, and `Ack` (acknowledge) them.
 topicID := uuid.MustParse("00000000-0000-0000-0000-000000000000")
 publisher := pubsub.NewPublisher(topicID, pubsub.WithHTTPRoundTripper(roundTripper))
 
-messages := [][]byte{
-    []byte("Hello, PubSub!"),
-}
-messageIDs, err := publisher.Publish(ctx, messages)
+messageIDs, err := publisher.PublishStrings(ctx, "Hello, PubSub!")
 
 // Pull
 subscriptionID := uuid.MustParse("00000000-0000-0000-0000-000000000000")
 subscriber := pubsub.NewSubscriber(topicID, subscriptionID, pubsub.WithHTTPRoundTripper(roundTripper))
 
 pulledMessages, err := subscriber.Pull(ctx, pubsub.WithMaxMessages(10))
+
+for i := 0; i < len(pulledMessages); i++ {
+    msg, err := pulledMessages[0].AsString()
+    if err != nil {
+        log.Fatalf("Error converting message to string: %v", err)
+    }
+    log.Printf("Message [%d]: %s:", i, msg)
+}
 
 // Acknowledge
 ackIDs := pulledMessages.GetAckIDs()
@@ -107,7 +112,7 @@ The SDK returns specific error types to help you handle different failure scenar
 
 ```go
 // Example of detailed error handling
-_, err := publisher.Publish(ctx, messages)
+_, err := publisher.PublishStrings(ctx, "Hello, PubSub!")
 if err != nil {
     var apiErr *pubsub.APIError
     if errors.As(err, &apiErr) {
