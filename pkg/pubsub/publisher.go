@@ -23,7 +23,7 @@ type Publisher struct {
 
 // NewPublisher instantiates a new Publisher. It returns an error if the underlying
 // API dataplane client fails to initialize.
-func NewPublisher(topicID uuid.UUID, opts ...Option) (*Publisher, error) {
+func NewPublisher(topicID uuid.UUID, opts ...Option) *Publisher {
 	cfg := &clientConfig{
 		httpClient: http.DefaultClient,
 		host:       "pubsub.eu01.onstackit.cloud",
@@ -36,13 +36,11 @@ func NewPublisher(topicID uuid.UUID, opts ...Option) (*Publisher, error) {
 
 	topicURL := url.URL{Scheme: "https", Host: fmt.Sprintf("%s.%s", topicID.String(), cfg.host)}
 
-	dataplane, err := api.NewClientWithResponses(
+	// SAFETY: The error here can never be non nil, as WithHTTPClient always returns a nil error.
+	dataplane, _ := api.NewClientWithResponses(
 		topicURL.String(),
 		api.WithHTTPClient(cfg.httpClient),
 	)
-	if err != nil {
-		return nil, NewConfigurationError("failed to initialize api dataplane client", err)
-	}
 
 	publisher := &Publisher{
 		TopicID:    topicID,
@@ -52,7 +50,7 @@ func NewPublisher(topicID uuid.UUID, opts ...Option) (*Publisher, error) {
 		dataplane:  dataplane,
 	}
 
-	return publisher, nil
+	return publisher
 }
 
 // PublishStrings acts as a lightweight adapter converting string slice to byte slices,

@@ -25,7 +25,7 @@ type Subscriber struct {
 
 // NewSubscriber instantiates a new Subscriber. It returns an error if the underlying
 // API dataplane client fails to initialize.
-func NewSubscriber(topicID uuid.UUID, subscriptionID uuid.UUID, opts ...Option) (*Subscriber, error) {
+func NewSubscriber(topicID uuid.UUID, subscriptionID uuid.UUID, opts ...Option) *Subscriber {
 	cfg := &clientConfig{
 		httpClient: http.DefaultClient,
 		host:       "pubsub.eu01.onstackit.cloud",
@@ -38,13 +38,11 @@ func NewSubscriber(topicID uuid.UUID, subscriptionID uuid.UUID, opts ...Option) 
 
 	topicURL := url.URL{Scheme: "https", Host: fmt.Sprintf("%s.%s", topicID.String(), cfg.host)}
 
-	dataplane, err := api.NewClientWithResponses(
+	// SAFETY: The error here can never be non nil, as WithHTTPClient always returns a nil error.
+	dataplane, _ := api.NewClientWithResponses(
 		topicURL.String(),
 		api.WithHTTPClient(cfg.httpClient),
 	)
-	if err != nil {
-		return nil, NewConfigurationError("failed to initialize api dataplane client", err)
-	}
 
 	subscriber := &Subscriber{
 		SubscriptionID: subscriptionID,
@@ -54,7 +52,7 @@ func NewSubscriber(topicID uuid.UUID, subscriptionID uuid.UUID, opts ...Option) 
 		dataplane:      dataplane,
 	}
 
-	return subscriber, nil
+	return subscriber
 }
 
 func (s *Subscriber) Ack(ctx context.Context, ids []string) error {

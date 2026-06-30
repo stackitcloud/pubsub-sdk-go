@@ -39,7 +39,7 @@ func pull() {
 
 	log.Printf("Successfully pulled message: %v", pulledMessages)
 	for i := 0; i < len(pulledMessages); i++ {
-		msg, err := pulledMessages[i].Text()
+		msg, err := pulledMessages[i].DecodeString()
 		if err != nil {
 			log.Fatalf("Error converting message to string: %v", err)
 		}
