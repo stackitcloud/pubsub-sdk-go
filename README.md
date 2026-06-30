@@ -92,7 +92,7 @@ subscriber := pubsub.NewSubscriber(topicID, subscriptionID, pubsub.WithHTTPRound
 pulledMessages, err := subscriber.Pull(ctx, pubsub.WithMaxMessages(10))
 
 for i := 0; i < len(pulledMessages); i++ {
-    msg, err := pulledMessages[i].AsString()
+    msg, err := pulledMessages[i].Text()
     if err != nil {
         log.Fatalf("Error converting message to string: %v", err)
     }
@@ -100,7 +100,7 @@ for i := 0; i < len(pulledMessages); i++ {
 }
 
 // Acknowledge
-ackIDs := pulledMessages.GetAckIDs()
+ackIDs := pulledMessages.AckIDs()
 err = subscriber.Ack(ctx, ackIDs)
 ```
 

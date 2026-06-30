@@ -2,6 +2,7 @@ package pubsub
 
 import (
 	"context"
+	"fmt"
 	"time"
 )
 
@@ -22,7 +23,10 @@ func (m *PullMessage) Nack(ctx context.Context) error {
 	return m.subscription.Nack(ctx, []string{m.AckID})
 }
 
-func (m PullMessages) GetAckIDs() []string {
+type PullMessages []PullMessage
+
+// AckIDs extracts all AckIDs cleanly from a slice of PullMessages.
+func (m PullMessages) AckIDs() []string {
 	ids := make([]string, len(m))
 	for i, msg := range m {
 		ids[i] = msg.AckID
@@ -30,25 +34,30 @@ func (m PullMessages) GetAckIDs() []string {
 	return ids
 }
 
-func (m *PullMessage) AsString() (string, error) {
-	str, err := base64ToStrings(m.Data)
+// DecodeString reverses the transparent base64 encoding, returning the cleartext string.
+func (m *PullMessage) DecodeString() (string, error) {
+	decoded, err := base64Decode(m.Data)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to decode message data: %w", err)
 	}
-	return str[0], nil
+	return string(decoded), nil
 }
 
-func (m *PullMessage) AsBytes() []byte {
-	return m.Data
-}
-
-type PullMessages []PullMessage
-
-func (m PullMessages) AsStrings() ([]string, error) {
-	strings := make([]string, 0, len(m))
-	for _, msg := range m {
-		str, _ := msg.AsString()
-		strings = append(strings, str)
+// DecodeStrings decodes an entire slice of messages.
+// If any single message is corrupt, it returns the error immediately instead of swallowing it.
+func (m PullMessages) DecodeStrings() ([]string, error) {
+	strings := make([]string, len(m))
+	for i, msg := range m {
+		str, err := msg.DecodeString()
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode message at index %d: %w", i, err)
+		}
+		strings[i] = str
 	}
 	return strings, nil
+}
+
+// Bytes exposes the underlying raw base64 data.
+func (m *PullMessage) Bytes() []byte {
+	return m.Data
 }

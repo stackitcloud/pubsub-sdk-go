@@ -15,13 +15,15 @@ import (
 
 type Publisher struct {
 	dataplane  *api.ClientWithResponses
-	TopicId    uuid.UUID
+	TopicID    uuid.UUID
 	logger     logr.Logger
-	topicUrl   url.URL
+	topicURL   url.URL
 	httpClient *http.Client
 }
 
-func NewPublisher(topicId uuid.UUID, opts ...Option) *Publisher {
+// NewPublisher instantiates a new Publisher. It returns an error if the underlying
+// API dataplane client fails to initialize.
+func NewPublisher(topicID uuid.UUID, opts ...Option) (*Publisher, error) {
 	cfg := &clientConfig{
 		httpClient: http.DefaultClient,
 		host:       "pubsub.eu01.onstackit.cloud",
@@ -32,30 +34,44 @@ func NewPublisher(topicId uuid.UUID, opts ...Option) *Publisher {
 		opt(cfg)
 	}
 
-	topicUrl := url.URL{Scheme: "https", Host: fmt.Sprintf("%s.%s", topicId.String(), cfg.host)}
+	topicURL := url.URL{Scheme: "https", Host: fmt.Sprintf("%s.%s", topicID.String(), cfg.host)}
 
-	publisher := &Publisher{
-		TopicId:    topicId,
-		topicUrl:   topicUrl,
-		httpClient: cfg.httpClient,
-		logger:     cfg.logger.WithValues("topic_id", topicId),
+	dataplane, err := api.NewClientWithResponses(
+		topicURL.String(),
+		api.WithHTTPClient(cfg.httpClient),
+	)
+	if err != nil {
+		return nil, NewConfigurationError("failed to initialize api dataplane client", err)
 	}
 
-	publisher.dataplane, _ = api.NewClientWithResponses(
-		publisher.topicUrl.String(),
-		api.WithHTTPClient(publisher.httpClient),
-	)
+	publisher := &Publisher{
+		TopicID:    topicID,
+		topicURL:   topicURL,
+		httpClient: cfg.httpClient,
+		logger:     cfg.logger.WithValues("topic_id", topicID),
+		dataplane:  dataplane,
+	}
 
-	return publisher
+	return publisher, nil
 }
 
+// PublishStrings acts as a lightweight adapter converting string slice to byte slices,
+// deferring all encoding safely to the core Publish method.
 func (p *Publisher) PublishStrings(ctx context.Context, messages ...string) ([]uint64, error) {
-	return p.Publish(ctx, stringsToBase64(messages...))
+	byteMessages := make([][]byte, len(messages))
+	for i, msg := range messages {
+		byteMessages[i] = []byte(msg)
+	}
+	return p.Publish(ctx, byteMessages)
 }
 
+// Publish processes raw bytes, encodes them transparently using bytesToBase64,
+// and transmits them out via the API client.
 func (p *Publisher) Publish(ctx context.Context, messages [][]byte) ([]uint64, error) {
-	messagesToPublish := make([]api.PublishMessage, len(messages))
-	for i, msg := range messages {
+	encodedMessages := bytesToBase64(messages...)
+
+	messagesToPublish := make([]api.PublishMessage, len(encodedMessages))
+	for i, msg := range encodedMessages {
 		messagesToPublish[i] = api.PublishMessage{
 			Data: msg,
 		}
@@ -68,10 +84,7 @@ func (p *Publisher) Publish(ctx context.Context, messages [][]byte) ([]uint64, e
 	p.logger.V(4).Info("publishing messages", "count", len(messages))
 	resp, err := p.dataplane.PublishMessagesWithResponse(ctx, reqBody)
 	if err != nil {
-		return nil, &NetworkError{
-			Msg: "failed to execute publish messages request",
-			Err: err,
-		}
+		return nil, NewNetworkError("failed to execute publish messages request", err)
 	}
 
 	if resp.StatusCode() != http.StatusOK {
@@ -88,16 +101,12 @@ func (p *Publisher) Publish(ctx context.Context, messages [][]byte) ([]uint64, e
 }
 
 // Purge removes all messages currently stored in the topic.
-// This is a destructive operation and cannot be undone.
 func (p *Publisher) Purge(ctx context.Context) error {
 	p.logger.V(4).Info("purging topic")
 
 	resp, err := p.dataplane.PurgeTopicWithResponse(ctx)
 	if err != nil {
-		return &NetworkError{
-			Msg: "failed to execute purge topic request",
-			Err: err,
-		}
+		return NewNetworkError("failed to execute purge topic request", err)
 	}
 
 	if resp.StatusCode() != http.StatusNoContent {

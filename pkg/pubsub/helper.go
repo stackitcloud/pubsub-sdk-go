@@ -2,30 +2,25 @@ package pubsub
 
 import (
 	"encoding/base64"
-	"fmt"
 )
 
-func stringsToBase64(strings ...string) [][]byte {
-	result := make([][]byte, len(strings))
-
-	for i, string := range strings {
-		encodedStrings := base64.StdEncoding.EncodeToString([]byte(string))
-		result[i] = []byte(encodedStrings)
+// bytesToBase64 encodes multiple raw byte slices into base64 byte slice.
+func bytesToBase64(messages ...[]byte) [][]byte {
+	result := make([][]byte, len(messages))
+	for i, msg := range messages {
+		dst := make([]byte, base64.StdEncoding.EncodedLen(len(msg)))
+		base64.StdEncoding.Encode(dst, msg)
+		result[i] = dst
 	}
 	return result
 }
 
-func base64ToStrings(encodedStrings ...[]byte) ([]string, error) {
-	result := make([]string, len(encodedStrings))
-
-	for i, s := range encodedStrings {
-		decodedBytes := make([]byte, base64.StdEncoding.DecodedLen(len(s)))
-		n, err := base64.StdEncoding.Decode(decodedBytes, s)
-		if err != nil {
-			return nil, fmt.Errorf("failed to decode string at index %d: %w", i, err)
-		}
-		result[i] = string(decodedBytes[:n])
+// base64Decode safely decodes a single base64-encoded byte slice.
+func base64Decode(src []byte) ([]byte, error) {
+	dst := make([]byte, base64.StdEncoding.DecodedLen(len(src)))
+	n, err := base64.StdEncoding.Decode(dst, src)
+	if err != nil {
+		return nil, err
 	}
-
-	return result, nil
+	return dst[:n], nil
 }

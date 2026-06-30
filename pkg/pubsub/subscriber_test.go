@@ -26,7 +26,7 @@ var _ = Describe("Acknowledge messages", func() {
 		Expect(err).ToNot(HaveOccurred())
 		Expect(pulledMessages).ToNot(BeEmpty())
 
-		AckIDs = pulledMessages.GetAckIDs()
+		AckIDs = pulledMessages.AckIDs()
 	})
 
 	Context("acknowledging messages", func() {
@@ -151,10 +151,10 @@ var _ = Describe("PullJob", func() {
 			Eventually(jobChan, "5s").Should(Receive(&receivedMessages))
 			Expect(receivedMessages).To(HaveLen(1))
 
-			decodedString, err := receivedMessages[0].AsString()
+			decodedString, err := receivedMessages[0].Text()
 			Expect(err).ToNot(HaveOccurred())
 			Expect(decodedString).To(Equal("testMessage"))
-			err = subscriber.Ack(ctx, receivedMessages.GetAckIDs())
+			err = subscriber.Ack(ctx, receivedMessages.AckIDs())
 			Expect(err).ToNot(HaveOccurred())
 
 			cancel()
@@ -177,10 +177,10 @@ var _ = Describe("PullJob", func() {
 			Eventually(jobChan, "10s").Should(Receive(&receivedMessages))
 			Expect(receivedMessages).To(HaveLen(1))
 
-			decodedString, err := receivedMessages[0].AsString()
+			decodedString, err := receivedMessages[0].Text()
 			Expect(err).ToNot(HaveOccurred())
 			Expect(decodedString).To(Equal("testMessage"))
-			err = subscriber.Ack(ctx, receivedMessages.GetAckIDs())
+			err = subscriber.Ack(ctx, receivedMessages.AckIDs())
 			Expect(err).ToNot(HaveOccurred())
 
 			cancel()
@@ -199,10 +199,10 @@ var _ = Describe("PullJob", func() {
 			callback := func(ctx context.Context, messages pubsub.PullMessages) {
 				defer GinkgoRecover()
 				Expect(messages).To(HaveLen(1))
-				decoded, err := messages[0].AsString()
+				decoded, err := messages[0].Text()
 				Expect(err).ToNot(HaveOccurred())
 				Expect(decoded).To(Equal("testMessage"))
-				err = subscriber.Ack(ctx, messages.GetAckIDs())
+				err = subscriber.Ack(ctx, messages.AckIDs())
 				Expect(err).ToNot(HaveOccurred())
 				callbackInvoked.Store(true)
 				cancel()
