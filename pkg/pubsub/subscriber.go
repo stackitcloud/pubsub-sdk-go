@@ -15,15 +15,17 @@ import (
 )
 
 type Subscriber struct {
-	SubscriptionId uuid.UUID
+	SubscriptionID uuid.UUID
 	logger         logr.Logger
 	dataplane      *api.ClientWithResponses
-	topicUrl       url.URL
+	topicURL       url.URL
 	httpClient     *http.Client
 	wg             sync.WaitGroup
 }
 
-func NewSubscriber(topicId uuid.UUID, subscriptionId uuid.UUID, opts ...Option) *Subscriber {
+// NewSubscriber instantiates a new Subscriber. It returns an error if the underlying
+// API dataplane client fails to initialize.
+func NewSubscriber(topicID uuid.UUID, subscriptionID uuid.UUID, opts ...Option) *Subscriber {
 	cfg := &clientConfig{
 		httpClient: http.DefaultClient,
 		host:       "pubsub.eu01.onstackit.cloud",
@@ -34,19 +36,21 @@ func NewSubscriber(topicId uuid.UUID, subscriptionId uuid.UUID, opts ...Option) 
 		opt(cfg)
 	}
 
-	topicUrl := url.URL{Scheme: "https", Host: fmt.Sprintf("%s.%s", topicId.String(), cfg.host)}
+	topicURL := url.URL{Scheme: "https", Host: fmt.Sprintf("%s.%s", topicID.String(), cfg.host)}
+
+	// SAFETY: The error here can never be non nil, as WithHTTPClient always returns a nil error.
+	dataplane, _ := api.NewClientWithResponses(
+		topicURL.String(),
+		api.WithHTTPClient(cfg.httpClient),
+	)
 
 	subscriber := &Subscriber{
-		SubscriptionId: subscriptionId,
-		topicUrl:       topicUrl,
+		SubscriptionID: subscriptionID,
+		topicURL:       topicURL,
 		httpClient:     cfg.httpClient,
-		logger:         cfg.logger.WithValues("subscription_id", topicId),
+		logger:         cfg.logger.WithValues("subscription_id", subscriptionID),
+		dataplane:      dataplane,
 	}
-
-	subscriber.dataplane, _ = api.NewClientWithResponses(
-		subscriber.topicUrl.String(),
-		api.WithHTTPClient(subscriber.httpClient),
-	)
 
 	return subscriber
 }
@@ -56,25 +60,18 @@ func (s *Subscriber) Ack(ctx context.Context, ids []string) error {
 		AckIds: ids,
 	}
 
-	s.logger.V(4).Info("acknowledging messages",
-		"count", len(ids),
-	)
+	s.logger.V(4).Info("acknowledging messages", "count", len(ids))
 
-	resp, err := s.dataplane.AckMessagesWithResponse(ctx, s.SubscriptionId, reqBody)
+	resp, err := s.dataplane.AckMessagesWithResponse(ctx, s.SubscriptionID, reqBody)
 	if err != nil {
-		return NewNetworkError(
-			"failed to execute ack messages request",
-			err,
-		)
+		return NewNetworkError("failed to execute ack messages request", err)
 	}
 
 	if resp.StatusCode() != http.StatusNoContent {
 		return NewAPIError(resp.StatusCode(), resp.Body)
 	}
 
-	s.logger.V(4).Info("acknowledged messages",
-		"count", len(ids),
-	)
+	s.logger.V(4).Info("acknowledged messages", "count", len(ids))
 	return nil
 }
 
@@ -83,29 +80,22 @@ func (s *Subscriber) Nack(ctx context.Context, ids []string) error {
 		NackIds: ids,
 	}
 
-	s.logger.V(4).Info("nacking messages",
-		"count", len(ids),
-	)
+	s.logger.V(4).Info("nacking messages", "count", len(ids))
 
-	resp, err := s.dataplane.NackMessagesWithResponse(ctx, s.SubscriptionId, reqBody)
+	resp, err := s.dataplane.NackMessagesWithResponse(ctx, s.SubscriptionID, reqBody)
 	if err != nil {
-		return NewNetworkError(
-			"failed to execute nack messages request",
-			err,
-		)
+		return NewNetworkError("failed to execute nack messages request", err)
 	}
 
 	if resp.StatusCode() != http.StatusNoContent {
 		return NewAPIError(resp.StatusCode(), resp.Body)
 	}
 
-	s.logger.V(4).Info("nacked messages",
-		"count", len(ids),
-	)
+	s.logger.V(4).Info("nacked messages", "count", len(ids))
 	return nil
 }
 
-func toSdkMessages(m []api.Message, subscription *Subscriber) PullMessages {
+func toSDKMessages(m []api.Message, subscription *Subscriber) PullMessages {
 	sdkMessages := make(PullMessages, len(m))
 	for i, msg := range m {
 		sdkMessages[i] = PullMessage{
@@ -148,7 +138,6 @@ func (s *Subscriber) Pull(ctx context.Context, opts ...PullOption) (PullMessages
 		opt(cfg)
 	}
 
-	// 0 and nil both mean disabled; any other value must be in [100, 5000].
 	var longPullDuration *int32
 	if cfg.longPullDuration != nil && *cfg.longPullDuration != 0 {
 		ms := *cfg.longPullDuration
@@ -165,28 +154,23 @@ func (s *Subscriber) Pull(ctx context.Context, opts ...PullOption) (PullMessages
 		PubSubLongPullDuration: longPullDuration,
 	}
 
-	s.logger.V(4).Info("pulling messages",
-		"max_messages", int(cfg.maxMessages),
-	)
+	s.logger.V(4).Info("pulling messages", "max_messages", int(cfg.maxMessages))
 
-	resp, err := s.dataplane.PullMessagesWithResponse(ctx, s.SubscriptionId, &reqBody)
+	resp, err := s.dataplane.PullMessagesWithResponse(ctx, s.SubscriptionID, &reqBody)
 	if err != nil {
-		return nil, &NetworkError{
-			Msg: "failed to execute pull messages request",
-			Err: err,
-		}
+		return nil, NewNetworkError("failed to execute pull messages request", err)
 	}
 
 	if resp.StatusCode() != http.StatusOK {
 		return nil, NewAPIError(resp.StatusCode(), resp.Body)
 	}
 
-	messages := toSdkMessages(resp.JSON200.Messages, s)
+	messages := toSDKMessages(resp.JSON200.Messages, s)
 
 	s.logger.V(4).Info(
 		"pulled messages",
 		"count", len(resp.JSON200.Messages),
-		"ack_ids", messages.GetAckIDs(),
+		"ack_ids", messages.AckIDs(),
 	)
 	return messages, nil
 }
