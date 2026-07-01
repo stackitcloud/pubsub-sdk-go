@@ -38,16 +38,23 @@ func pull() {
 	}
 
 	log.Printf("Successfully pulled message: %v", pulledMessages)
+	for i := 0; i < len(pulledMessages); i++ {
+		msg, err := pulledMessages[i].DecodeString()
+		if err != nil {
+			log.Fatalf("Error converting message to string: %v", err)
+		}
+		log.Printf("Message [%d]: %s:", i, msg)
+	}
 
 	// Get your AckIDs and acknowledge them
-	ackIDs := pulledMessages.GetAckIDs()
+	ackIDs := pulledMessages.AckIDs()
 	err = subscriber.Ack(context.Background(), ackIDs)
 	if err != nil {
 		log.Fatalf("Error ack ids: %v", err)
 	}
 
 	// Get your NackIDs and not acknowledge them
-	nackIDs := pulledMessages.GetAckIDs()
+	nackIDs := pulledMessages.AckIDs()
 	err = subscriber.Nack(context.Background(), nackIDs)
 	if err != nil {
 		log.Fatalf("Error nack ids: %v", err)
