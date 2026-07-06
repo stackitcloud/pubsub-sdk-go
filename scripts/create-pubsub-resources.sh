@@ -11,7 +11,7 @@ TOKEN=$(stackit auth activate-service-account --only-print-access-token --servic
 echo "SERVICE_ACCOUNT_TOKEN=$TOKEN" >> $GITHUB_ENV
 
 if [ -z "$TOKEN" ] || [ ${#TOKEN} -lt 20 ]; then
-  echo "Error: Retrieved token is empty or too short."
+  echo "::error file=scripts/create-pubsub-resources.sh::Retrieved token is empty or too short."
   exit 1
 fi
 
@@ -27,8 +27,7 @@ TOPICBODY=$(echo "$TOPICRESPONSE" | sed '$d')
 echo "Response Body: $TOPICBODY"
 
 if [ "$HTTP_STATUS" -ne 202 ]; then
-  echo "API Error (HTTP $HTTP_STATUS)"
-  echo "Response Topic Body: $TOPICBODY"
+  echo "::error file=scripts/create-pubsub-resources.sh::Failed to create topic (HTTP $HTTP_STATUS) - Response: $TOPICBODY"
   exit 1
 fi
 
@@ -44,7 +43,7 @@ for i in {1..50}; do
     break
   fi
   if [ "$i" -eq 50 ]; then
-    echo "Topic did not become active in time."
+    echo "::error file=scripts/create-pubsub-resources.sh::Topic $TOPIC_ID did not become active in time."
     exit 1
   fi
   sleep 5
@@ -62,8 +61,7 @@ SUBBODY=$(echo "$SUBRESPONSE" | sed '$d')
 echo "Response Body: $SUBBODY"
 
 if [ "$HTTP_STATUS" -ne 202 ]; then
-  echo "API Error (HTTP $HTTP_STATUS)"
-  echo "Response SUBSCRIPTION Body: $SUBBODY"
+  echo "::error file=scripts/create-pubsub-resources.sh::Failed to create subscription (HTTP $HTTP_STATUS) - Response: $SUBBODY"
   exit 1
 fi
 
@@ -79,7 +77,7 @@ for i in {1..50}; do
     break
   fi
   if [ "$i" -eq 50 ]; then
-    echo "Subscription did not become active in time."
+    echo "::error file=scripts/create-pubsub-resources.sh::Subscription $SUBSCRIPTION_ID did not become active in time."
     exit 1
   fi
   sleep 5
@@ -97,8 +95,7 @@ HTTP_STATUS=$(echo "$PUBLISHER_RESPONSE" | tail -n 1)
 PUBLISHER_BODY=$(echo "$PUBLISHER_RESPONSE" | sed '$d')
 
 if [ "$HTTP_STATUS" -ne 202 ]; then
-  echo "API Error Granting Publisher Access (HTTP $HTTP_STATUS)"
-  echo "Response Granting Publisher Access Body: $PUBLISHER_BODY"
+  echo "::error file=scripts/create-pubsub-resources.sh::Failed to grant publisher access (HTTP $HTTP_STATUS) - Response: $PUBLISHER_BODY"
   exit 1
 fi
 
@@ -112,8 +109,7 @@ HTTP_STATUS=$(echo "$SUBSCRIBER_RESPONSE" | tail -n 1)
 SUBSCRIBER_BODY=$(echo "$SUBSCRIBER_RESPONSE" | sed '$d')
 
 if [ "$HTTP_STATUS" -ne 202 ]; then
-  echo "API Error Granting Subscriber Access (HTTP $HTTP_STATUS)"
-  echo "Response Granting Subscriber Access Body: $SUBSCRIBER_BODY"
+  echo "::error file=scripts/create-pubsub-resources.sh::Failed to grant subscriber access (HTTP $HTTP_STATUS) - Response: $SUBSCRIBER_BODY"
   exit 1
 fi
 
