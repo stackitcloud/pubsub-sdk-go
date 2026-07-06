@@ -26,7 +26,7 @@ HTTP_STATUS=$(echo "$TOPICRESPONSE" | tail -n 1)
 TOPICBODY=$(echo "$TOPICRESPONSE" | sed '$d')
 echo "Response Body: $TOPICBODY"
 
-if [ "$HTTP_STATUS" -ne 202 ] && [ "$HTTP_STATUS" -ne 200 ]; then
+if [ "$HTTP_STATUS" -ne 202 ]; then
   echo "API Error (HTTP $HTTP_STATUS)"
   echo "Response Topic Body: $TOPICBODY"
   exit 1
@@ -61,7 +61,7 @@ HTTP_STATUS=$(echo "$SUBRESPONSE" | tail -n 1)
 SUBBODY=$(echo "$SUBRESPONSE" | sed '$d')
 echo "Response Body: $SUBBODY"
 
-if [ "$HTTP_STATUS" -ne 202 ] && [ "$HTTP_STATUS" -ne 200 ]; then
+if [ "$HTTP_STATUS" -ne 202 ]; then
   echo "API Error (HTTP $HTTP_STATUS)"
   echo "Response SUBSCRIPTION Body: $SUBBODY"
   exit 1
@@ -96,7 +96,7 @@ PUBLISHER_RESPONSE=$(curl -sk -w "\n%{http_code}" -X PATCH "${BASE_URL}/projects
 HTTP_STATUS=$(echo "$PUBLISHER_RESPONSE" | tail -n 1)
 PUBLISHER_BODY=$(echo "$PUBLISHER_RESPONSE" | sed '$d')
 
-if [ "$HTTP_STATUS" -ne 202 ] && [ "$HTTP_STATUS" -ne 200 ]; then
+if [ "$HTTP_STATUS" -ne 202 ]; then
   echo "API Error Granting Publisher Access (HTTP $HTTP_STATUS)"
   echo "Response Granting Publisher Access Body: $PUBLISHER_BODY"
   exit 1
@@ -111,7 +111,7 @@ SUBSCRIBER_RESPONSE=$(curl -sk -w "\n%{http_code}" -X PATCH "${BASE_URL}/project
 HTTP_STATUS=$(echo "$SUBSCRIBER_RESPONSE" | tail -n 1)
 SUBSCRIBER_BODY=$(echo "$SUBSCRIBER_RESPONSE" | sed '$d')
 
-if [ "$HTTP_STATUS" -ne 202 ] && [ "$HTTP_STATUS" -ne 200 ]; then
+if [ "$HTTP_STATUS" -ne 202 ]; then
   echo "API Error Granting Subscriber Access (HTTP $HTTP_STATUS)"
   echo "Response Granting Subscriber Access Body: $SUBSCRIBER_BODY"
   exit 1
