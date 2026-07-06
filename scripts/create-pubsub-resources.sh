@@ -88,33 +88,34 @@ done
 
 #ACCESS
 echo "Granting Publisher Access via curl (Targeting: $REGION)..."
-GPARESPONSE=$(curl -sk -w "\n%{http_code}" -X PUT "${BASE_URL}/projects/${PROJECT_ID}/regions/${REGION}/topics/${TOPIC_ID}/publishers/$PUBLISHER_MAIL" \
+PUBLISHER_RESPONSE=$(curl -sk -w "\n%{http_code}" -X PATCH "${BASE_URL}/projects/${PROJECT_ID}/regions/${REGION}/topics/${TOPIC_ID}/publishers" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
-  -d "{\"displayName\": \"ci-topic-$(date +%s)\"}")
+  -d "{\"emailAddress\": \"$PUBLISHER_MAIL\"}")
+
+HTTP_STATUS=$(echo "$PUBLISHER_RESPONSE" | tail -n 1)
+PUBLISHER_BODY=$(echo "$PUBLISHER_RESPONSE" | sed '$d')
 
 if [ "$HTTP_STATUS" -ne 202 ] && [ "$HTTP_STATUS" -ne 200 ]; then
-  echo "API Error (HTTP $HTTP_STATUS)"
-  echo "Response Granting Publisher Access Body: $GPARESPONSE"
+  echo "API Error Granting Publisher Access (HTTP $HTTP_STATUS)"
+  echo "Response Granting Publisher Access Body: $PUBLISHER_BODY"
   exit 1
 fi
-
-echo "Response SUBSCRIPTION Body: $GPARESPONSE"
 
 echo "Granting Subscriber Access via curl (Targeting: $REGION)..."
-GSARESPONSE=$(curl -sk -w "\n%{http_code}" -X PUT "${BASE_URL}/projects/${PROJECT_ID}/regions/${REGION}/topics/${TOPIC_ID}/subscriptions/$SUBSCRIPTION_ID/subscribers/$PUBLISHER_MAIL" \
+SUBSCRIBER_RESPONSE=$(curl -sk -w "\n%{http_code}" -X PATCH "${BASE_URL}/projects/${PROJECT_ID}/regions/${REGION}/topics/${TOPIC_ID}/subscriptions/${SUBSCRIPTION_ID}/subscribers" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
-  -d "{\"displayName\": \"ci-topic-$(date +%s)\"}")
+  -d "{\"emailAddress\": \"$PUBLISHER_MAIL\"}")
 
+HTTP_STATUS=$(echo "$SUBSCRIBER_RESPONSE" | tail -n 1)
+SUBSCRIBER_BODY=$(echo "$SUBSCRIBER_RESPONSE" | sed '$d')
 
 if [ "$HTTP_STATUS" -ne 202 ] && [ "$HTTP_STATUS" -ne 200 ]; then
-  echo "API Error (HTTP $HTTP_STATUS)"
-  echo "Response Granting Subscriber Access Body: $GSARESPONSE"
+  echo "API Error Granting Subscriber Access (HTTP $HTTP_STATUS)"
+  echo "Response Granting Subscriber Access Body: $SUBSCRIBER_BODY"
   exit 1
 fi
 
-echo "Response SUBSCRIPTION Body: $GSARESPONSE"
-
 echo "Waiting for access permissions to propagate..."
-sleep 15
+sleep 5
