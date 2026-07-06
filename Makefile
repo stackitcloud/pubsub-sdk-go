@@ -7,7 +7,7 @@ export PATH := $(CURDIR)/bin:$(PATH)
 
 .PHONY: generate
 generate:
-	echo "Generating code..."
+	@echo "Generating code..."
 	oapi-codegen --config=scripts/sdk.cfg.yaml api/openapi.yaml
 
 .PHONY: prepare
