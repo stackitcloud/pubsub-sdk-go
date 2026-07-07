@@ -16,9 +16,8 @@ HTTP_STATUS=$(echo "$TOPICRESPONSE" | tail -n 1)
 TOPICBODY=$(echo "$TOPICRESPONSE" | sed '$d')
 echo "Response Body: $TOPICBODY"
 
-if [ "$HTTP_STATUS" -ne 202 ] && [ "$HTTP_STATUS" -ne 200 ]; then
-  echo "API Error (HTTP $HTTP_STATUS)"
-  echo "Response Topic Body: $TOPICBODY"
+if [ "$HTTP_STATUS" -ne 202 ]; then
+  echo "::error file=scripts/create-pubsub-resources.sh::Failed to create topic (HTTP $HTTP_STATUS) - Response: $TOPICBODY"
   exit 1
 fi
 
@@ -34,7 +33,7 @@ for i in {1..50}; do
     break
   fi
   if [ "$i" -eq 50 ]; then
-    echo "Topic did not become active in time."
+    echo "::error file=scripts/create-pubsub-resources.sh::Topic $TOPIC_ID did not become active in time."
     exit 1
   fi
   sleep 5
@@ -50,9 +49,8 @@ HTTP_STATUS=$(echo "$SUBRESPONSE" | tail -n 1)
 SUBBODY=$(echo "$SUBRESPONSE" | sed '$d')
 echo "Response Body: $SUBBODY"
 
-if [ "$HTTP_STATUS" -ne 202 ] && [ "$HTTP_STATUS" -ne 200 ]; then
-  echo "API Error (HTTP $HTTP_STATUS)"
-  echo "Response SUBSCRIPTION Body: $SUBBODY"
+if [ "$HTTP_STATUS" -ne 202 ]; then
+  echo "::error file=scripts/create-pubsub-resources.sh::Failed to create subscription (HTTP $HTTP_STATUS) - Response: $SUBBODY"
   exit 1
 fi
 
@@ -68,7 +66,7 @@ for i in {1..50}; do
     break
   fi
   if [ "$i" -eq 50 ]; then
-    echo "Subscription did not become active in time."
+    echo "::error file=scripts/create-pubsub-resources.sh::Subscription $SUBSCRIPTION_ID did not become active in time."
     exit 1
   fi
   sleep 5
@@ -77,31 +75,30 @@ done
 
 #ACCESS
 echo "Granting Publisher Access via curl (Targeting: $REGION)..."
-GPARESPONSE=$(stackit curl -sk -w "\n%{http_code}" -X PUT "${BASE_URL}/projects/${PROJECT_ID}/regions/${REGION}/topics/${TOPIC_ID}/publishers/$PUBLISHER_MAIL" \
+PUBLISHER_RESPONSE=$(stackit curl -sk -w "\n%{http_code}" -X PATCH "${BASE_URL}/projects/${PROJECT_ID}/regions/${REGION}/topics/${TOPIC_ID}/publishers" \
   -H "Content-Type: application/json" \
-  -d "{\"displayName\": \"ci-topic-$(date +%s)\"}")
+  -d "{\"emailAddress\": \"$PUBLISHER_MAIL\"}")
 
-if [ "$HTTP_STATUS" -ne 202 ] && [ "$HTTP_STATUS" -ne 200 ]; then
-  echo "API Error (HTTP $HTTP_STATUS)"
-  echo "Response Granting Publisher Access Body: $GPARESPONSE"
+HTTP_STATUS=$(echo "$PUBLISHER_RESPONSE" | tail -n 1)
+PUBLISHER_BODY=$(echo "$PUBLISHER_RESPONSE" | sed '$d')
+
+if [ "$HTTP_STATUS" -ne 202 ]; then
+  echo "::error file=scripts/create-pubsub-resources.sh::Failed to grant publisher access (HTTP $HTTP_STATUS) - Response: $PUBLISHER_BODY"
   exit 1
 fi
-
-echo "Response SUBSCRIPTION Body: $GPARESPONSE"
 
 echo "Granting Subscriber Access via curl (Targeting: $REGION)..."
-GSARESPONSE=$(stackit curl -sk -w "\n%{http_code}" -X PUT "${BASE_URL}/projects/${PROJECT_ID}/regions/${REGION}/topics/${TOPIC_ID}/subscriptions/$SUBSCRIPTION_ID/subscribers/$PUBLISHER_MAIL" \
+SUBSCRIBER_RESPONSE=$(stackit curl -sk -w "\n%{http_code}" -X PATCH "${BASE_URL}/projects/${PROJECT_ID}/regions/${REGION}/topics/${TOPIC_ID}/subscriptions/${SUBSCRIPTION_ID}/subscribers" \
   -H "Content-Type: application/json" \
-  -d "{\"displayName\": \"ci-topic-$(date +%s)\"}")
+  -d "{\"emailAddress\": \"$PUBLISHER_MAIL\"}")
 
+HTTP_STATUS=$(echo "$SUBSCRIBER_RESPONSE" | tail -n 1)
+SUBSCRIBER_BODY=$(echo "$SUBSCRIBER_RESPONSE" | sed '$d')
 
-if [ "$HTTP_STATUS" -ne 202 ] && [ "$HTTP_STATUS" -ne 200 ]; then
-  echo "API Error (HTTP $HTTP_STATUS)"
-  echo "Response Granting Subscriber Access Body: $GSARESPONSE"
+if [ "$HTTP_STATUS" -ne 202 ]; then
+  echo "::error file=scripts/create-pubsub-resources.sh::Failed to grant subscriber access (HTTP $HTTP_STATUS) - Response: $SUBSCRIBER_BODY"
   exit 1
 fi
 
-echo "Response SUBSCRIPTION Body: $GSARESPONSE"
-
 echo "Waiting for access permissions to propagate..."
-sleep 15
+sleep 5
