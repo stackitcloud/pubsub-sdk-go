@@ -13,9 +13,8 @@ fi
 # We use force=true query parameter on the topic deletion to perform a cascading delete of the topic
 # and all of its active subscriptions.
 echo "Cleaning up Topic: $TOPIC_ID with force=true"
-DELETE_RESPONSE=$(curl -sk -w "\n%{http_code}" -X DELETE \
-  --url "${BASE_URL}/projects/${PROJECT_ID}/regions/${REGION}/topics/${TOPIC_ID}?force=true" \
-  --header "Authorization: Bearer ${STACKIT_SERVICE_ACCOUNT_TOKEN}")
+DELETE_RESPONSE=$(stackit curl -sk -w "\n%{http_code}" -X DELETE \
+  --url "${BASE_URL}/projects/${PROJECT_ID}/regions/${REGION}/topics/${TOPIC_ID}?force=true")
 
 HTTP_STATUS=$(echo "$DELETE_RESPONSE" | tail -n 1)
 DELETE_BODY=$(echo "$DELETE_RESPONSE" | sed '$d')

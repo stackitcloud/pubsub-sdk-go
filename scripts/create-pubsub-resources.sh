@@ -6,19 +6,9 @@ REGION="eu01"
 BASE_URL="https://pubsub.api.qa.stackit.cloud/v1alpha"
 PUBLISHER_MAIL="pubsub-dataplane-sdk-44cqm3i8@sa.stackit.cloud"
 
-echo "Fetching fresh access token..."
-TOKEN=$(stackit auth activate-service-account --only-print-access-token --service-account-key-path "$SA_KEY_PATH" | tr -d '\r\n ')
-echo "SERVICE_ACCOUNT_TOKEN=$TOKEN" >> $GITHUB_ENV
-
-if [ -z "$TOKEN" ] || [ ${#TOKEN} -lt 20 ]; then
-  echo "Error: Retrieved token is empty or too short."
-  exit 1
-fi
-
 #TOPIC
 echo "Creating Topic via curl (Targeting: $REGION)..."
-TOPICRESPONSE=$(curl -sk -w "\n%{http_code}" -X POST "${BASE_URL}/projects/${PROJECT_ID}/regions/${REGION}/topics" \
-  -H "Authorization: Bearer $TOKEN" \
+TOPICRESPONSE=$(stackit curl -sk -w "\n%{http_code}" -X POST "${BASE_URL}/projects/${PROJECT_ID}/regions/${REGION}/topics" \
   -H "Content-Type: application/json" \
   -d "{\"displayName\": \"ci-topic-$(date +%s)\"}")
 
@@ -38,7 +28,7 @@ echo "TOPIC_ID=$TOPIC_ID" >> $GITHUB_ENV
 
 echo "Waiting for topic to become active..."
 for i in {1..50}; do
-  STATUS=$(curl -sk -H "Authorization: Bearer $TOKEN" "${BASE_URL}/projects/${PROJECT_ID}/regions/${REGION}/topics/${TOPIC_ID}" | jq -r '.state')
+  STATUS=$(stackit curl -sk "${BASE_URL}/projects/${PROJECT_ID}/regions/${REGION}/topics/${TOPIC_ID}" | jq -r '.state')
   echo "Current topic status: $STATUS"
   if [ "$STATUS" == "active" ]; then
     break
@@ -52,8 +42,7 @@ done
 
 #SUBSCRIPTION
 echo "Creating Subscription via curl (Targeting: $REGION)..."
-SUBRESPONSE=$(curl -sk -w "\n%{http_code}" -X POST "${BASE_URL}/projects/${PROJECT_ID}/regions/${REGION}/topics/${TOPIC_ID}/subscriptions" \
-  -H "Authorization: Bearer $TOKEN" \
+SUBRESPONSE=$(stackit curl -sk -w "\n%{http_code}" -X POST "${BASE_URL}/projects/${PROJECT_ID}/regions/${REGION}/topics/${TOPIC_ID}/subscriptions" \
   -H "Content-Type: application/json" \
   -d "{\"displayName\": \"ci-topic-$(date +%s)\"}")
 
@@ -73,7 +62,7 @@ echo "SUBSCRIPTION_ID=$SUBSCRIPTION_ID" >> $GITHUB_ENV
 
 echo "Waiting for subscription to become active..."
 for i in {1..50}; do
-  STATUS=$(curl -sk -H "Authorization: Bearer $TOKEN" "${BASE_URL}/projects/${PROJECT_ID}/regions/${REGION}/topics/${TOPIC_ID}/subscriptions/${SUBSCRIPTION_ID}" | jq -r '.state')
+  STATUS=$(stackit curl -sk "${BASE_URL}/projects/${PROJECT_ID}/regions/${REGION}/topics/${TOPIC_ID}/subscriptions/${SUBSCRIPTION_ID}" | jq -r '.state')
   echo "Current subscription status: $STATUS"
   if [ "$STATUS" == "active" ]; then
     break
@@ -88,8 +77,7 @@ done
 
 #ACCESS
 echo "Granting Publisher Access via curl (Targeting: $REGION)..."
-GPARESPONSE=$(curl -sk -w "\n%{http_code}" -X PUT "${BASE_URL}/projects/${PROJECT_ID}/regions/${REGION}/topics/${TOPIC_ID}/publishers/$PUBLISHER_MAIL" \
-  -H "Authorization: Bearer $TOKEN" \
+GPARESPONSE=$(stackit curl -sk -w "\n%{http_code}" -X PUT "${BASE_URL}/projects/${PROJECT_ID}/regions/${REGION}/topics/${TOPIC_ID}/publishers/$PUBLISHER_MAIL" \
   -H "Content-Type: application/json" \
   -d "{\"displayName\": \"ci-topic-$(date +%s)\"}")
 
@@ -102,8 +90,7 @@ fi
 echo "Response SUBSCRIPTION Body: $GPARESPONSE"
 
 echo "Granting Subscriber Access via curl (Targeting: $REGION)..."
-GSARESPONSE=$(curl -sk -w "\n%{http_code}" -X PUT "${BASE_URL}/projects/${PROJECT_ID}/regions/${REGION}/topics/${TOPIC_ID}/subscriptions/$SUBSCRIPTION_ID/subscribers/$PUBLISHER_MAIL" \
-  -H "Authorization: Bearer $TOKEN" \
+GSARESPONSE=$(stackit curl -sk -w "\n%{http_code}" -X PUT "${BASE_URL}/projects/${PROJECT_ID}/regions/${REGION}/topics/${TOPIC_ID}/subscriptions/$SUBSCRIPTION_ID/subscribers/$PUBLISHER_MAIL" \
   -H "Content-Type: application/json" \
   -d "{\"displayName\": \"ci-topic-$(date +%s)\"}")
 
