@@ -302,7 +302,7 @@ func NewPublishMessagesRequestWithBody(server string, contentType string, body i
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/v1alpha/publish")
+	operationPath := fmt.Sprintf("/v1beta/publish")
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -331,7 +331,7 @@ func NewPurgeTopicRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/v1alpha/purge")
+	operationPath := fmt.Sprintf("/v1beta/purge")
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -376,7 +376,7 @@ func NewAckMessagesRequestWithBody(server string, subscriptionId SubscriptionId,
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/v1alpha/subscriptions/%s/ack", pathParam0)
+	operationPath := fmt.Sprintf("/v1beta/subscriptions/%s/ack", pathParam0)
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -423,7 +423,7 @@ func NewNackMessagesRequestWithBody(server string, subscriptionId SubscriptionId
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/v1alpha/subscriptions/%s/nack", pathParam0)
+	operationPath := fmt.Sprintf("/v1beta/subscriptions/%s/nack", pathParam0)
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -459,7 +459,7 @@ func NewPullMessagesRequest(server string, subscriptionId SubscriptionId, params
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/v1alpha/subscriptions/%s/pull", pathParam0)
+	operationPath := fmt.Sprintf("/v1beta/subscriptions/%s/pull", pathParam0)
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}

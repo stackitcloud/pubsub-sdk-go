@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Configuration
-BASE_URL="https://pubsub.api.qa.stackit.cloud/v1alpha"
+BASE_URL="https://pubsub.api.qa.stackit.cloud/v1beta"
 PROJECT_ID="0ec85b07-ecb2-4253-9ba8-25ae06db1b7a"
 REGION="eu01"
 

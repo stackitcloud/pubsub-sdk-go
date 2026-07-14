@@ -1,7 +1,7 @@
 # For details see https://spec.openapis.org/oas/v3.0.3.html
 openapi: 3.0.3
 info:
-  version: 1alpha.0.0
+  version: 1beta.0.0
   title: STACKIT PubSub Data Plane API
   description: |
     This API provides endpoints for managing PubSubs.
@@ -15,7 +15,7 @@ servers:
         default: "00000000-0000-0000-0000-000000000000"
 
 paths:
-  /v1alpha/publish:
+  /v1beta/publish:
     post:
       operationId: publish-messages
       description: Publish messages within a topic.
@@ -50,7 +50,7 @@ paths:
           $ref: '#/components/responses/serviceUnavailable'
         '504':
           $ref: '#/components/responses/gatewayTimeout'
-  /v1alpha/purge:
+  /v1beta/purge:
     post:
       operationId: purge-topic
       description: Purge all messages within a topic without deleting the topic itself.
@@ -74,7 +74,7 @@ paths:
         '504':
           $ref: '#/components/responses/gatewayTimeout'
 
-  /v1alpha/subscriptions/{subscriptionId}/pull:
+  /v1beta/subscriptions/{subscriptionId}/pull:
     parameters:
       - $ref: '#/components/parameters/subscriptionId'
     post:
@@ -124,7 +124,7 @@ paths:
           $ref: '#/components/responses/serviceUnavailable'
         '504':
           $ref: '#/components/responses/gatewayTimeout'
-  /v1alpha/subscriptions/{subscriptionId}/ack:
+  /v1beta/subscriptions/{subscriptionId}/ack:
     parameters:
       - $ref: '#/components/parameters/subscriptionId'
     post:
@@ -155,7 +155,7 @@ paths:
           $ref: '#/components/responses/serviceUnavailable'
         '504':
           $ref: '#/components/responses/gatewayTimeout'
-  /v1alpha/subscriptions/{subscriptionId}/nack:
+  /v1beta/subscriptions/{subscriptionId}/nack:
     parameters:
       - $ref: '#/components/parameters/subscriptionId'
     post:
