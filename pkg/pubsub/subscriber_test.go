@@ -109,7 +109,7 @@ var _ = Describe("Pull messages", func() {
 		})
 		It("should pull messages with long pull duration set", func(ctx context.Context) {
 			subscriber := pubsub.NewSubscriber(topicId, subscriptionId, pubsub.WithHTTPRoundTripper(rt), pubsub.WithHost(environment))
-			resp, err := subscriber.Pull(ctx, pubsub.WithMaxMessages(128), pubsub.WithLongPullDuration(500))
+			resp, err := subscriber.Pull(ctx, pubsub.WithMaxMessages(32), pubsub.WithLongPullDuration(500))
 			Expect(err).ToNot(HaveOccurred())
 			Expect(resp).ToNot(BeNil())
 		})

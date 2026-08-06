@@ -7,6 +7,9 @@ ginkgo = "2.28.1"
 golangci-lint = "2.8.0"
 "go:github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen" = "v2.7.0"
 
+[env]
+GOTOOLCHAIN = "go1.25.11"
+
 [settings]
 # The go backend is experimental
 experimental = true
