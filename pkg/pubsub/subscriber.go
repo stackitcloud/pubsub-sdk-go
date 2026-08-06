@@ -134,7 +134,7 @@ func WithMaxMessages(maximum int32) PullOption {
 
 func (s *Subscriber) Pull(ctx context.Context, opts ...PullOption) (PullMessages, error) {
 	cfg := &pullOptions{
-		maxMessages: 64,
+		maxMessages: 32,
 	}
 
 	for _, opt := range opts {
