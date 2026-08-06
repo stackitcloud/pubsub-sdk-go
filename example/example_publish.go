@@ -12,13 +12,12 @@ import (
 
 //nolint:all
 func publish() {
-
 	// Authentication with STACKIT SDK - Returns a Round-Tripper
 	rt, err := auth.DefaultAuth(&config.Configuration{
 		ServiceAccountKeyPath: "./service-account-key.json",
 	})
 	if err != nil {
-		log.Printf("Error creating authentication token: %v", err)
+		log.Fatalf("Error creating authentication token: %v", err)
 	}
 
 	// Setup your Topic ID
@@ -30,16 +29,13 @@ func publish() {
 		pubsub.WithHTTPRoundTripper(rt),
 	)
 
-	// Create a message to publish to the topic and encode it to base64 format
-	message := pubsub.StringsToBase64("Hello PubSub from example", "This is another message")
-
 	// Publish the messages to the topic using the publisher client
-	_, err = publisher.Publish(
+	_, err = publisher.PublishStrings(
 		context.Background(),
-		message,
+		"Hello PubSub from example", "This is another message",
 	)
 	if err != nil {
-		log.Printf("Error publishing message: %v", err)
+		log.Fatalf("Error publishing message: %v", err)
 	}
 
 	log.Print("Successfully published messages")

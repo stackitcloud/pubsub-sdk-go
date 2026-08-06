@@ -2,6 +2,7 @@ package pubsub_test
 
 import (
 	"context"
+	"errors"
 	"sync/atomic"
 	"time"
 
@@ -16,9 +17,8 @@ var _ = Describe("Acknowledge messages", func() {
 
 	BeforeEach(func(ctx context.Context) {
 		publisher := pubsub.NewPublisher(topicId, pubsub.WithHTTPRoundTripper(rt), pubsub.WithHost(environment))
-		messagesToPublish := pubsub.StringsToBase64("test1")
 
-		_, err := publisher.Publish(ctx, messagesToPublish)
+		_, err := publisher.PublishStrings(ctx, "test1")
 		Expect(err).ToNot(HaveOccurred())
 
 		subscriber := pubsub.NewSubscriber(topicId, subscriptionId, pubsub.WithHTTPRoundTripper(rt), pubsub.WithHost(environment))
@@ -26,7 +26,7 @@ var _ = Describe("Acknowledge messages", func() {
 		Expect(err).ToNot(HaveOccurred())
 		Expect(pulledMessages).ToNot(BeEmpty())
 
-		AckIDs = pulledMessages.GetAckIDs()
+		AckIDs = pulledMessages.AckIDs()
 	})
 
 	Context("acknowledging messages", func() {
@@ -64,13 +64,40 @@ var _ = Describe("Acknowledge messages", func() {
 	})
 })
 
+var _ = Describe("WithLongPullDuration validation", func() {
+	DescribeTable("invalid durations return ConfigurationError",
+		func(ctx context.Context, ms int32) {
+			subscriber := pubsub.NewSubscriber(topicId, subscriptionId)
+			_, err := subscriber.Pull(ctx, pubsub.WithLongPullDuration(ms))
+			Expect(err).To(HaveOccurred())
+			var cfgErr *pubsub.ConfigurationError
+			Expect(errors.As(err, &cfgErr)).To(BeTrue())
+		},
+		Entry("below minimum", int32(50)),
+		Entry("above maximum", int32(6000)),
+	)
+
+	DescribeTable("valid durations do not return ConfigurationError",
+		func(ms int32) {
+			subscriber := pubsub.NewSubscriber(topicId, subscriptionId)
+			_, err := subscriber.Pull(context.Background(), pubsub.WithLongPullDuration(ms))
+			if err != nil {
+				var cfgErr *pubsub.ConfigurationError
+				Expect(errors.As(err, &cfgErr)).To(BeFalse(), "expected no ConfigurationError for ms=%d", ms)
+			}
+		},
+		Entry("disabled (0)", int32(0)),
+		Entry("minimum (100)", int32(100)),
+		Entry("maximum (5000)", int32(5000)),
+	)
+})
+
 var _ = Describe("Pull messages", func() {
 	Context("pulling messages", func() {
 		BeforeEach(func(ctx context.Context) {
 			publisher := pubsub.NewPublisher(topicId, pubsub.WithHTTPRoundTripper(rt), pubsub.WithHost(environment))
-			messagesToPublish := pubsub.StringsToBase64("test1", "test2", "test3")
 
-			_, err := publisher.Publish(ctx, messagesToPublish)
+			_, err := publisher.PublishStrings(ctx, "test1", "test2", "test3")
 			Expect(err).ToNot(HaveOccurred())
 		})
 
@@ -79,6 +106,12 @@ var _ = Describe("Pull messages", func() {
 			resp, err := subscriber.Pull(ctx, pubsub.WithMaxMessages(32))
 			Expect(resp).ToNot(BeNil())
 			Expect(err).ToNot(HaveOccurred())
+		})
+		It("should pull messages with long pull duration set", func(ctx context.Context) {
+			subscriber := pubsub.NewSubscriber(topicId, subscriptionId, pubsub.WithHTTPRoundTripper(rt), pubsub.WithHost(environment))
+			resp, err := subscriber.Pull(ctx, pubsub.WithMaxMessages(128), pubsub.WithLongPullDuration(500))
+			Expect(err).ToNot(HaveOccurred())
+			Expect(resp).ToNot(BeNil())
 		})
 		It(
 			"should pull only one Message, MaxMessages is set to 1 but more messages will be available",
@@ -94,28 +127,13 @@ var _ = Describe("Pull messages", func() {
 
 var _ = Describe("PullJob", func() {
 	BeforeEach(func(ctx context.Context) {
-		// making sure everything is empty, and acking everything, stopping when len = 0
-		subscriber := pubsub.NewSubscriber(topicId, subscriptionId, pubsub.WithHTTPRoundTripper(rt), pubsub.WithHost(environment))
-
-		Eventually(func(g Gomega) bool {
-			msgs, err := subscriber.Pull(ctx, pubsub.WithMaxMessages(13))
-			g.Expect(err).ToNot(HaveOccurred())
-
-			if len(msgs) == 0 {
-				return true
-			}
-
-			err = subscriber.Ack(ctx, msgs.GetAckIDs())
-			g.Expect(err).ToNot(HaveOccurred())
-
-			return false
-		}).WithTimeout(10 * time.Second).WithPolling(500 * time.Millisecond).Should(BeTrue())
+		publisher := pubsub.NewPublisher(topicId, pubsub.WithHTTPRoundTripper(rt), pubsub.WithHost(environment))
+		// making sure everything is empty
+		err := publisher.Purge(ctx)
+		Expect(err).ToNot(HaveOccurred())
 
 		// publishing test messages
-		publisher := pubsub.NewPublisher(topicId, pubsub.WithHTTPRoundTripper(rt), pubsub.WithHost(environment))
-		messagesToPublish := pubsub.StringsToBase64("testMessage", "testMessage2")
-
-		_, err := publisher.Publish(ctx, messagesToPublish)
+		_, err = publisher.PublishStrings(ctx, "testMessage")
 		Expect(err).ToNot(HaveOccurred())
 	})
 
@@ -123,23 +141,50 @@ var _ = Describe("PullJob", func() {
 		It("should receive a message from channel", func(ctx context.Context) {
 			subscriber := pubsub.NewSubscriber(topicId, subscriptionId, pubsub.WithHTTPRoundTripper(rt), pubsub.WithHost(environment))
 
-			var receivedMessages pubsub.PullMessages
-			Eventually(func(g Gomega) {
-				msgs, err := subscriber.Pull(ctx, pubsub.WithMaxMessages(1))
-				g.Expect(err).ToNot(HaveOccurred())
-				if len(msgs) > 0 {
-					receivedMessages = msgs
-				}
-				g.Expect(receivedMessages).ToNot(BeEmpty())
-			}).WithContext(ctx).Should(Succeed())
+			ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+			defer cancel()
 
+			jobChan, err := subscriber.PullJobChan(ctx, pubsub.WithInterval(100*time.Millisecond))
+			Expect(err).ToNot(HaveOccurred())
+
+			var receivedMessages pubsub.PullMessages
+			Eventually(jobChan, "5s").Should(Receive(&receivedMessages))
 			Expect(receivedMessages).To(HaveLen(1))
 
-			decodedStrings, err := pubsub.Base64ToStrings(string(receivedMessages[0].Data))
+			decodedString, err := receivedMessages[0].DecodeString()
 			Expect(err).ToNot(HaveOccurred())
-			Expect(decodedStrings[0]).To(Or(Equal("testMessage"), Equal("testMessage2")))
-			err = subscriber.Ack(ctx, receivedMessages.GetAckIDs())
+			Expect(decodedString).To(Equal("testMessage"))
+			err = subscriber.Ack(ctx, receivedMessages.AckIDs())
 			Expect(err).ToNot(HaveOccurred())
+
+			cancel()
+			subscriber.Wait()
+		})
+
+		It("should receive a message from channel with long pull duration set", func(ctx context.Context) {
+			subscriber := pubsub.NewSubscriber(topicId, subscriptionId, pubsub.WithHTTPRoundTripper(rt), pubsub.WithHost(environment))
+
+			ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+			defer cancel()
+
+			jobChan, err := subscriber.PullJobChan(ctx,
+				pubsub.WithInterval(100*time.Millisecond),
+				pubsub.WithPullLongPullDuration(500),
+			)
+			Expect(err).ToNot(HaveOccurred())
+
+			var receivedMessages pubsub.PullMessages
+			Eventually(jobChan, "10s").Should(Receive(&receivedMessages))
+			Expect(receivedMessages).To(HaveLen(1))
+
+			decodedString, err := receivedMessages[0].DecodeString()
+			Expect(err).ToNot(HaveOccurred())
+			Expect(decodedString).To(Equal("testMessage"))
+			err = subscriber.Ack(ctx, receivedMessages.AckIDs())
+			Expect(err).ToNot(HaveOccurred())
+
+			cancel()
+			subscriber.Wait()
 		})
 	})
 
@@ -154,10 +199,10 @@ var _ = Describe("PullJob", func() {
 			callback := func(ctx context.Context, messages pubsub.PullMessages) {
 				defer GinkgoRecover()
 				Expect(messages).To(HaveLen(1))
-				decoded, err := pubsub.Base64ToStrings(string(messages[0].Data))
+				decoded, err := messages[0].DecodeString()
 				Expect(err).ToNot(HaveOccurred())
-				Expect(decoded[0]).To(Or(Equal("testMessage"), Equal("testMessage2")))
-				err = subscriber.Ack(ctx, messages.GetAckIDs())
+				Expect(decoded).To(Equal("testMessage"))
+				err = subscriber.Ack(ctx, messages.AckIDs())
 				Expect(err).ToNot(HaveOccurred())
 				callbackInvoked.Store(true)
 				cancel()

@@ -1,5 +1,5 @@
 [tools]
-go = "1.25.0" # Make sure this matches the go.mod
+go = "1.25.11" # Make sure this matches the go.mod
 "go:gitlab.com/backbone/changelog/cmd/changelog" = "v1.1.0"
 ginkgo = "2.28.1"
 "go:github.com/axw/gocov/gocov" = "v1.1.0"

@@ -7,19 +7,7 @@ info:
     This API provides endpoints for managing PubSubs.
 
 servers:
-  - url: https://{topicId}.api.pubsub-dp.eu01.dev.stackit.cloud
-    description: Development endpoint in eu01.
-    variables:
-      topicId:
-        description: The Topic UUID.
-        default: "00000000-0000-0000-0000-000000000000"
-  - url: https://{topicId}.api.pubsub-dp.eu01.qa.stackit.cloud
-    description: QA endpoint in eu01.
-    variables:
-      topicId:
-        description: The Topic UUID.
-        default: "00000000-0000-0000-0000-000000000000"
-  - url: https://{topicId}.api.pubsub-dp.eu01.stackit.cloud
+  - url: https://{topicId}.pubsub.eu01.onstackit.cloud
     description: Production endpoint in eu01.
     variables:
       topicId:
@@ -105,6 +93,16 @@ paths:
             minimum: 1
             maximum: 32
             default: 16
+        - name: PubSub-Long-Pull-Duration
+          in: header
+          description: The maximum amount of milliseconds to keep an connection open, awaiting a new message on the server.
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 100
+            maximum: 5000
+            default: 5000
       responses:
         '200':
           description: Messages pulled successfully.

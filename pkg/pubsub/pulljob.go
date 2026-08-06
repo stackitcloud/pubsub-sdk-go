@@ -7,11 +7,12 @@ import (
 )
 
 type pullJob struct {
-	subscription    *Subscriber
-	maxPullMessages int32
-	interval        time.Duration
-	bufferSize      int
-	errHandler      func(err error) bool
+	subscription     *Subscriber
+	maxPullMessages  int32
+	longPullDuration *int32
+	interval         time.Duration
+	bufferSize       int
+	errHandler       func(err error) bool
 }
 
 var ErrMissingCallback = NewConfigurationError("callback function is required", nil)
@@ -21,6 +22,12 @@ type PullJobOption func(*pullJob)
 func WithPullMaxMessages(maximum int32) PullJobOption {
 	return func(b *pullJob) {
 		b.maxPullMessages = maximum
+	}
+}
+
+func WithPullLongPullDuration(milliseconds int32) PullJobOption {
+	return func(b *pullJob) {
+		b.longPullDuration = &milliseconds
 	}
 }
 
@@ -74,7 +81,11 @@ func (b *pullJob) runLoop(ctx context.Context, handler func(context.Context, Pul
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			messages, err := b.subscription.Pull(ctx, WithMaxMessages(b.maxPullMessages))
+			pullOpts := []PullOption{WithMaxMessages(b.maxPullMessages)}
+			if b.longPullDuration != nil {
+				pullOpts = append(pullOpts, WithLongPullDuration(*b.longPullDuration))
+			}
+			messages, err := b.subscription.Pull(ctx, pullOpts...)
 			if err != nil { //nolint:nestif
 				var sdkErr SDKError          // Declare the target variable
 				if errors.As(err, &sdkErr) { // Pass a pointer to sdkErr
