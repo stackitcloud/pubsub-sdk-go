@@ -88,29 +88,34 @@ done
 
 #ACCESS
 echo "Granting Publisher Access via curl (Targeting: $REGION)..."
-GPARESPONSE=$(curl -sk -w "\n%{http_code}" -X PUT "${BASE_URL}/projects/${PROJECT_ID}/regions/${REGION}/topics/${TOPIC_ID}/publishers/$PUBLISHER_MAIL" \
-  -H "Authorization: Bearer $TOKEN" \
+PUBLISHER_RESPONSE=$(curl -sk -w "\n%{http_code}" -X PATCH "${BASE_URL}/projects/${PROJECT_ID}/regions/${REGION}/topics/${TOPIC_ID}/publishers" \
+  -H "Authorization: Bearer ${TOKEN}" \
   -H "Content-Type: application/json" \
   -d "{\"displayName\": \"ci-topic-$(date +%s)\"}")
 
+  HTTP_STATUS=$(echo "$PUBLISHER_RESPONSE" | tail -n 1)
+  PUBLISHER_BODY=$(echo "$PUBLISHER_RESPONSE" | sed '$d')
+  echo "Response Body: $PUBLISHER_BODY"
+
 if [ "$HTTP_STATUS" -ne 202 ] && [ "$HTTP_STATUS" -ne 200 ]; then
-  echo "API Error (HTTP $HTTP_STATUS)"
-  echo "Response Granting Publisher Access Body: $GPARESPONSE"
+  echo "::error file=scripts/create-pubsub-resources.sh::Failed to grant publisher access (HTTP $HTTP_STATUS) - Response: $PUBLISHER_BODY"
   exit 1
 fi
 
 echo "Response SUBSCRIPTION Body: $GPARESPONSE"
 
 echo "Granting Subscriber Access via curl (Targeting: $REGION)..."
-GSARESPONSE=$(curl -sk -w "\n%{http_code}" -X PUT "${BASE_URL}/projects/${PROJECT_ID}/regions/${REGION}/topics/${TOPIC_ID}/subscriptions/$SUBSCRIPTION_ID/subscribers/$PUBLISHER_MAIL" \
-  -H "Authorization: Bearer $TOKEN" \
+SUBSCRIBER_RESPONSE=$(curl -sk -w "\n%{http_code}" -X PATCH "${BASE_URL}/projects/${PROJECT_ID}/regions/${REGION}/topics/${TOPIC_ID}/subscriptions/${SUBSCRIPTION_ID}/subscribers" \
+  -H "Authorization: Bearer ${TOKEN}" \
   -H "Content-Type: application/json" \
   -d "{\"displayName\": \"ci-topic-$(date +%s)\"}")
 
+HTTP_STATUS=$(echo "$SUBSCRIBER_RESPONSE" | tail -n 1)
+SUBSCRIBER_BODY=$(echo "$SUBSCRIBER_RESPONSE" | sed '$d')
+echo "Response Body: $SUBSCRIBER_BODY"
 
 if [ "$HTTP_STATUS" -ne 202 ] && [ "$HTTP_STATUS" -ne 200 ]; then
-  echo "API Error (HTTP $HTTP_STATUS)"
-  echo "Response Granting Subscriber Access Body: $GSARESPONSE"
+  echo "::error file=scripts/create-pubsub-resources.sh::Failed to grant subscriber access (HTTP $HTTP_STATUS) - Response: $SUBSCRIBER_BODY"
   exit 1
 fi
 
