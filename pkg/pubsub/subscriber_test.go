@@ -76,7 +76,7 @@ var _ = Describe("Pull messages", func() {
 
 		It("no error is occurring", func(ctx context.Context) {
 			subscriber := pubsub.NewSubscriber(topicId, subscriptionId, pubsub.WithHTTPRoundTripper(rt), pubsub.WithHost(environment))
-			resp, err := subscriber.Pull(ctx, pubsub.WithMaxMessages(128))
+			resp, err := subscriber.Pull(ctx, pubsub.WithMaxMessages(32))
 			Expect(resp).ToNot(BeNil())
 			Expect(err).ToNot(HaveOccurred())
 		})
