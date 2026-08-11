@@ -27,7 +27,7 @@ type Subscriber struct {
 // API dataplane client fails to initialize.
 func NewSubscriber(topicID uuid.UUID, subscriptionID uuid.UUID, opts ...Option) *Subscriber {
 	cfg := &clientConfig{
-		httpClient: http.DefaultClient,
+		httpClient: &http.Client{},
 		host:       "pubsub.eu01.onstackit.cloud",
 		logger:     logr.FromSlogHandler(slog.Default().Handler()),
 	}

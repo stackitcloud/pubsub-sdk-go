@@ -25,7 +25,7 @@ type Publisher struct {
 // API dataplane client fails to initialize.
 func NewPublisher(topicID uuid.UUID, opts ...Option) *Publisher {
 	cfg := &clientConfig{
-		httpClient: http.DefaultClient,
+		httpClient: &http.Client{},
 		host:       "pubsub.eu01.onstackit.cloud",
 		logger:     logr.FromSlogHandler(slog.Default().Handler()),
 	}
