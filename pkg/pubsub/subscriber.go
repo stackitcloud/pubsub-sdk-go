@@ -23,8 +23,7 @@ type Subscriber struct {
 	wg             sync.WaitGroup
 }
 
-// NewSubscriber instantiates a new Subscriber. It returns an error if the underlying
-// API dataplane client fails to initialize.
+// NewSubscriber instantiates a new Subscriber.
 func NewSubscriber(topicID uuid.UUID, subscriptionID uuid.UUID, opts ...Option) *Subscriber {
 	cfg := &clientConfig{
 		httpClient: &http.Client{},
