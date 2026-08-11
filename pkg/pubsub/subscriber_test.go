@@ -86,7 +86,6 @@ var _ = Describe("WithLongPullDuration validation", func() {
 				Expect(errors.As(err, &cfgErr)).To(BeFalse(), "expected no ConfigurationError for ms=%d", ms)
 			}
 		},
-		Entry("disabled (0)", int32(0)),
 		Entry("minimum (100)", int32(100)),
 		Entry("maximum (5000)", int32(5000)),
 	)

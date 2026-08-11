@@ -111,7 +111,7 @@ func toSDKMessages(m []api.Message, subscription *Subscriber) PullMessages {
 
 type pullOptions struct {
 	maxMessages      int32
-	longPullDuration *int32
+	longPullDuration int32
 }
 
 type PullOption func(*pullOptions)
@@ -124,33 +124,29 @@ func WithMaxMessages(maximum int32) PullOption {
 
 func WithLongPullDuration(milliseconds int32) PullOption {
 	return func(opts *pullOptions) {
-		opts.longPullDuration = &milliseconds
+		opts.longPullDuration = milliseconds
 	}
 }
 
 func (s *Subscriber) Pull(ctx context.Context, opts ...PullOption) (PullMessages, error) {
 	cfg := &pullOptions{
-		maxMessages: 32,
+		maxMessages:      32,
+		longPullDuration: 100,
 	}
 
 	for _, opt := range opts {
 		opt(cfg)
 	}
 
-	var longPullDuration *int32
-	if cfg.longPullDuration != nil && *cfg.longPullDuration != 0 {
-		ms := *cfg.longPullDuration
-		if ms < 100 || ms > 5000 {
-			return nil, &ConfigurationError{
-				Msg: fmt.Sprintf("long_pull_duration must be 0 (default) or between 100–5000, got %d", ms),
-			}
+	if cfg.longPullDuration < 100 || cfg.longPullDuration > 5000 {
+		return nil, &ConfigurationError{
+			Msg: fmt.Sprintf("long_pull_duration must be between 100–5000, got %d", cfg.longPullDuration),
 		}
-		longPullDuration = &ms
 	}
 
 	reqBody := api.PullMessagesParams{
 		PubSubMaxMessages:      &cfg.maxMessages,
-		PubSubLongPullDuration: longPullDuration,
+		PubSubLongPullDuration: &cfg.longPullDuration,
 	}
 
 	s.logger.V(4).Info("pulling messages", "max_messages", int(cfg.maxMessages))

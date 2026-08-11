@@ -3,13 +3,14 @@ package pubsub
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 )
 
 type pullJob struct {
 	subscription     *Subscriber
 	maxPullMessages  int32
-	longPullDuration *int32
+	longPullDuration int32
 	interval         time.Duration
 	bufferSize       int
 	errHandler       func(err error) bool
@@ -27,7 +28,7 @@ func WithPullMaxMessages(maximum int32) PullJobOption {
 
 func WithPullLongPullDuration(milliseconds int32) PullJobOption {
 	return func(b *pullJob) {
-		b.longPullDuration = &milliseconds
+		b.longPullDuration = milliseconds
 	}
 }
 
@@ -53,12 +54,13 @@ func WithErrorHandler(handler func(err error) bool) PullJobOption {
 	}
 }
 
-func newPullJob(s *Subscriber, opts []PullJobOption) *pullJob {
+func newPullJob(s *Subscriber, opts []PullJobOption) (*pullJob, error) {
 	b := &pullJob{
-		subscription:    s,
-		maxPullMessages: 10,
-		interval:        time.Second * 5,
-		bufferSize:      0,
+		subscription:     s,
+		maxPullMessages:  10,
+		interval:         1,
+		longPullDuration: 5000,
+		bufferSize:       0,
 		errHandler: func(err error) bool {
 			s.logger.Error(err, "fatal background error")
 			return true
@@ -69,7 +71,13 @@ func newPullJob(s *Subscriber, opts []PullJobOption) *pullJob {
 		opt(b)
 	}
 
-	return b
+	if b.interval < 1 {
+		return nil, &ConfigurationError{
+			Msg: fmt.Sprintf("interval must be at least set to 1, got %d", b.interval),
+		}
+	}
+
+	return b, nil
 }
 
 func (b *pullJob) runLoop(ctx context.Context, handler func(context.Context, PullMessages)) {
@@ -81,10 +89,7 @@ func (b *pullJob) runLoop(ctx context.Context, handler func(context.Context, Pul
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			pullOpts := []PullOption{WithMaxMessages(b.maxPullMessages)}
-			if b.longPullDuration != nil {
-				pullOpts = append(pullOpts, WithLongPullDuration(*b.longPullDuration))
-			}
+			pullOpts := []PullOption{WithMaxMessages(b.maxPullMessages), WithLongPullDuration(b.longPullDuration)}
 			messages, err := b.subscription.Pull(ctx, pullOpts...)
 			if err != nil { //nolint:nestif
 				var sdkErr SDKError          // Declare the target variable
@@ -121,7 +126,11 @@ func (s *Subscriber) PullJobCallback(
 		return ErrMissingCallback
 	}
 
-	job := newPullJob(s, opts)
+	job, err := newPullJob(s, opts)
+	if err != nil {
+		return err
+	}
+
 	s.wg.Go(func() {
 		job.runLoop(ctx, callback)
 	})
@@ -135,7 +144,11 @@ func (s *Subscriber) PullJobCallback(
 }
 
 func (s *Subscriber) PullJobChan(ctx context.Context, opts ...PullJobOption) (<-chan PullMessages, error) {
-	job := newPullJob(s, opts)
+	job, err := newPullJob(s, opts)
+	if err != nil {
+		return nil, err
+	}
+
 	out := make(chan PullMessages, job.bufferSize)
 
 	s.wg.Go(func() {
