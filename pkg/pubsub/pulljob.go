@@ -55,7 +55,7 @@ func WithErrorHandler(handler func(err error) bool) PullJobOption {
 }
 
 func newPullJob(s *Subscriber, opts []PullJobOption) (*pullJob, error) {
-	b := &pullJob{
+	job := &pullJob{
 		subscription:     s,
 		maxPullMessages:  10,
 		interval:         1,
@@ -68,20 +68,20 @@ func newPullJob(s *Subscriber, opts []PullJobOption) (*pullJob, error) {
 	}
 
 	for _, opt := range opts {
-		opt(b)
+		opt(job)
 	}
 
-	if b.interval < 1 {
+	if job.interval < 1 {
 		return nil, &ConfigurationError{
-			Msg: fmt.Sprintf("interval must be at least set to 1, got %d", b.interval),
+			Msg: fmt.Sprintf("interval must be at least set to 1, got %d", job.interval),
 		}
 	}
 
-	return b, nil
+	return job, nil
 }
 
-func (b *pullJob) runLoop(ctx context.Context, handler func(context.Context, PullMessages)) {
-	ticker := time.NewTicker(b.interval)
+func (j *pullJob) runLoop(ctx context.Context, handler func(context.Context, PullMessages)) {
+	ticker := time.NewTicker(j.interval)
 	defer ticker.Stop()
 
 	for {
@@ -89,24 +89,24 @@ func (b *pullJob) runLoop(ctx context.Context, handler func(context.Context, Pul
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			pullOpts := []PullOption{WithMaxMessages(b.maxPullMessages), WithLongPullDuration(b.longPullDuration)}
-			messages, err := b.subscription.Pull(ctx, pullOpts...)
+			pullOpts := []PullOption{WithMaxMessages(j.maxPullMessages), WithLongPullDuration(j.longPullDuration)}
+			messages, err := j.subscription.Pull(ctx, pullOpts...)
 			if err != nil { //nolint:nestif
 				var sdkErr SDKError          // Declare the target variable
 				if errors.As(err, &sdkErr) { // Pass a pointer to sdkErr
 					if !sdkErr.IsTransient() {
 						// Only exit the loop if the users error handler returns false
-						if !b.errHandler(err) {
+						if !j.errHandler(err) {
 							return
 						}
 						continue
 					}
 
-					b.subscription.logger.Error(err, "transient error, retrying")
+					j.subscription.logger.Error(err, "transient error, retrying")
 					continue
 				}
 
-				b.subscription.logger.Error(err, "unknown error, retrying")
+				j.subscription.logger.Error(err, "unknown error, retrying")
 				continue
 			}
 
