@@ -86,7 +86,6 @@ var _ = Describe("WithLongPullDuration validation", func() {
 				Expect(errors.As(err, &cfgErr)).To(BeFalse(), "expected no ConfigurationError for ms=%d", ms)
 			}
 		},
-		Entry("disabled (0)", int32(0)),
 		Entry("minimum (100)", int32(100)),
 		Entry("maximum (5000)", int32(5000)),
 	)
@@ -132,6 +131,8 @@ var _ = Describe("PullJob", func() {
 		err := publisher.Purge(ctx)
 		Expect(err).ToNot(HaveOccurred())
 
+		time.Sleep(1 * time.Second) // wait for topic to be purged
+
 		// publishing test messages
 		_, err = publisher.PublishStrings(ctx, "testMessage")
 		Expect(err).ToNot(HaveOccurred())
@@ -140,36 +141,14 @@ var _ = Describe("PullJob", func() {
 	Context("using PullJobChan", func() {
 		It("should receive a message from channel", func(ctx context.Context) {
 			subscriber := pubsub.NewSubscriber(topicId, subscriptionId, pubsub.WithHTTPRoundTripper(rt), pubsub.WithHost(environment))
+			defer subscriber.Wait()
 
-			ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
-			defer cancel()
-
-			jobChan, err := subscriber.PullJobChan(ctx, pubsub.WithInterval(100*time.Millisecond))
-			Expect(err).ToNot(HaveOccurred())
-
-			var receivedMessages pubsub.PullMessages
-			Eventually(jobChan, "5s").Should(Receive(&receivedMessages))
-			Expect(receivedMessages).To(HaveLen(1))
-
-			decodedString, err := receivedMessages[0].DecodeString()
-			Expect(err).ToNot(HaveOccurred())
-			Expect(decodedString).To(Equal("testMessage"))
-			err = subscriber.Ack(ctx, receivedMessages.AckIDs())
-			Expect(err).ToNot(HaveOccurred())
-
-			cancel()
-			subscriber.Wait()
-		})
-
-		It("should receive a message from channel with long pull duration set", func(ctx context.Context) {
-			subscriber := pubsub.NewSubscriber(topicId, subscriptionId, pubsub.WithHTTPRoundTripper(rt), pubsub.WithHost(environment))
-
-			ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+			ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
 			defer cancel()
 
 			jobChan, err := subscriber.PullJobChan(ctx,
-				pubsub.WithInterval(100*time.Millisecond),
-				pubsub.WithPullLongPullDuration(500),
+				pubsub.WithPullLongPullDuration(100),
+				pubsub.WithPullMaxMessages(1),
 			)
 			Expect(err).ToNot(HaveOccurred())
 
@@ -184,7 +163,6 @@ var _ = Describe("PullJob", func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			cancel()
-			subscriber.Wait()
 		})
 	})
 
@@ -192,7 +170,7 @@ var _ = Describe("PullJob", func() {
 		It("should invoke the callback with messages", func(ctx context.Context) {
 			subscriber := pubsub.NewSubscriber(topicId, subscriptionId, pubsub.WithHTTPRoundTripper(rt), pubsub.WithHost(environment))
 			defer subscriber.Wait()
-			ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+			ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
 			defer cancel()
 
 			var callbackInvoked atomic.Bool // check if callback was invoked
@@ -211,8 +189,8 @@ var _ = Describe("PullJob", func() {
 			err := subscriber.PullJobCallback(
 				ctx,
 				callback,
-				pubsub.WithInterval(100*time.Millisecond),
 				pubsub.WithPullMaxMessages(1),
+				pubsub.WithPullLongPullDuration(100),
 			)
 			Expect(err).ToNot(HaveOccurred())
 

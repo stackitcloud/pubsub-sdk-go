@@ -21,11 +21,10 @@ type Publisher struct {
 	httpClient *http.Client
 }
 
-// NewPublisher instantiates a new Publisher. It returns an error if the underlying
-// API dataplane client fails to initialize.
+// NewPublisher instantiates a new Publisher.
 func NewPublisher(topicID uuid.UUID, opts ...Option) *Publisher {
 	cfg := &clientConfig{
-		httpClient: http.DefaultClient,
+		httpClient: &http.Client{},
 		host:       "pubsub.eu01.onstackit.cloud",
 		logger:     logr.FromSlogHandler(slog.Default().Handler()),
 	}
