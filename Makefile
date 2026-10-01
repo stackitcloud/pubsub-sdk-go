@@ -25,3 +25,9 @@ test: prepare
 	go tool covdata percent -i=tmp/coverage
 	go tool covdata textfmt -i=tmp/coverage -o tmp/cover.out
 	go tool cover -html=tmp/cover.out -o tmp/cover.html
+
+license-add:
+	addlicense -c "Schwarz Digits Cloud GmbH & Co. KG" -l apache .
+
+license-check:
+	addlicense -check -c "Schwarz Digits Cloud GmbH & Co. KG" -l apache .
