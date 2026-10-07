@@ -22,7 +22,6 @@ import (
 
 type PullMessage struct {
 	subscription     *Subscriber
-	ID               uint64
 	AckID            string
 	Data             []byte
 	CreateTime       time.Time

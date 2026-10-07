@@ -29,11 +29,9 @@ var _ = Describe("publish a message", func() {
 		It("should publish the message and return a message ID", func(ctx context.Context) {
 			publisher := pubsub.NewPublisher(topicId, pubsub.WithHTTPRoundTripper(rt), pubsub.WithHost(environment))
 
-			messageIDs, err := publisher.PublishStrings(ctx, "Hello, Stackit!")
+			err := publisher.PublishStrings(ctx, "Hello, Stackit!")
 
 			Expect(err).ToNot(HaveOccurred())
-			Expect(messageIDs).ToNot(BeNil())
-			Expect(messageIDs).To(HaveLen(1))
 		})
 	})
 
@@ -42,7 +40,7 @@ var _ = Describe("publish a message", func() {
 			publisher := pubsub.NewPublisher(topicId, pubsub.WithHTTPRoundTripper(rt), pubsub.WithHost(environment))
 			subscriber := pubsub.NewSubscriber(topicId, subscriptionId, pubsub.WithHTTPRoundTripper(rt), pubsub.WithHost(environment))
 
-			_, err := publisher.PublishStrings(ctx, "message-to-be-purged-1", "message-to-be-purged-2")
+			err := publisher.PublishStrings(ctx, "message-to-be-purged-1", "message-to-be-purged-2")
 			Expect(err).ToNot(HaveOccurred())
 
 			Eventually(func(g Gomega) {

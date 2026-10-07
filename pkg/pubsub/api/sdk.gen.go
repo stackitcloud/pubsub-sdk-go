@@ -37,9 +37,6 @@ type Message struct {
 
 	// DeliveryAttempts Number of times the message has been tried to be delivered.
 	DeliveryAttempts uint64 `json:"deliveryAttempts"`
-
-	// Id A unique, increasing sequence number identifying the message within the topic.
-	Id uint64 `json:"id"`
 }
 
 // Messages defines model for messages.
@@ -57,11 +54,6 @@ type NackMessagesFromTopicRequest struct {
 type PublishMessage struct {
 	// Data Base64 encoded message payload.
 	Data []byte `json:"data"`
-}
-
-// PublishMessageResponse defines model for publishMessageResponse.
-type PublishMessageResponse struct {
-	MessageIds []uint64 `json:"messageIds"`
 }
 
 // PublishMessageToTopicRequest defines model for publishMessageToTopicRequest.
@@ -571,7 +563,6 @@ type ClientWithResponsesInterface interface {
 type PublishMessagesResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *PublishMessageResponse
 }
 
 // Status returns HTTPResponse.Status
@@ -795,16 +786,6 @@ func ParsePublishMessagesResponse(rsp *http.Response) (*PublishMessagesResponse,
 	response := &PublishMessagesResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest PublishMessageResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
 	}
 
 	return response, nil

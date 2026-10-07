@@ -32,7 +32,7 @@ var _ = Describe("Acknowledge messages", func() {
 	BeforeEach(func(ctx context.Context) {
 		publisher := pubsub.NewPublisher(topicId, pubsub.WithHTTPRoundTripper(rt), pubsub.WithHost(environment))
 
-		_, err := publisher.PublishStrings(ctx, "test1")
+		err := publisher.PublishStrings(ctx, "test1")
 		Expect(err).ToNot(HaveOccurred())
 
 		subscriber := pubsub.NewSubscriber(topicId, subscriptionId, pubsub.WithHTTPRoundTripper(rt), pubsub.WithHost(environment))
@@ -110,7 +110,7 @@ var _ = Describe("Pull messages", func() {
 		BeforeEach(func(ctx context.Context) {
 			publisher := pubsub.NewPublisher(topicId, pubsub.WithHTTPRoundTripper(rt), pubsub.WithHost(environment))
 
-			_, err := publisher.PublishStrings(ctx, "test1", "test2", "test3")
+			err := publisher.PublishStrings(ctx, "test1", "test2", "test3")
 			Expect(err).ToNot(HaveOccurred())
 		})
 
@@ -148,7 +148,7 @@ var _ = Describe("PullJob", func() {
 		time.Sleep(1 * time.Second) // wait for topic to be purged
 
 		// publishing test messages
-		_, err = publisher.PublishStrings(ctx, "testMessage")
+		err = publisher.PublishStrings(ctx, "testMessage")
 		Expect(err).ToNot(HaveOccurred())
 	})
 
