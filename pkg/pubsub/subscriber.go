@@ -117,7 +117,6 @@ func toSDKMessages(m []api.Message, subscription *Subscriber) PullMessages {
 			CreateTime:       msg.CreateTime,
 			Data:             msg.Data,
 			DeliveryAttempts: msg.DeliveryAttempts,
-			ID:               msg.Id,
 		}
 	}
 	return sdkMessages

@@ -44,7 +44,7 @@ func publish() {
 	)
 
 	// Publish the messages to the topic using the publisher client
-	_, err = publisher.PublishStrings(
+	err = publisher.PublishStrings(
 		context.Background(),
 		"Hello PubSub from example", "This is another message",
 	)

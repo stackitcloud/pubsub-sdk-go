@@ -68,7 +68,7 @@ func NewPublisher(topicID uuid.UUID, opts ...Option) *Publisher {
 
 // PublishStrings acts as a lightweight adapter converting string slice to byte slices,
 // deferring all encoding safely to the core Publish method.
-func (p *Publisher) PublishStrings(ctx context.Context, messages ...string) ([]uint64, error) {
+func (p *Publisher) PublishStrings(ctx context.Context, messages ...string) error {
 	byteMessages := make([][]byte, len(messages))
 	for i, msg := range messages {
 		byteMessages[i] = []byte(msg)
@@ -78,7 +78,7 @@ func (p *Publisher) PublishStrings(ctx context.Context, messages ...string) ([]u
 
 // Publish processes raw bytes, encodes them transparently using bytesToBase64,
 // and transmits them out via the API client.
-func (p *Publisher) Publish(ctx context.Context, messages [][]byte) ([]uint64, error) {
+func (p *Publisher) Publish(ctx context.Context, messages [][]byte) error {
 	encodedMessages := bytesToBase64(messages...)
 
 	messagesToPublish := make([]api.PublishMessage, len(encodedMessages))
@@ -95,20 +95,19 @@ func (p *Publisher) Publish(ctx context.Context, messages [][]byte) ([]uint64, e
 	p.logger.V(4).Info("publishing messages", "count", len(messages))
 	resp, err := p.dataplane.PublishMessagesWithResponse(ctx, reqBody)
 	if err != nil {
-		return nil, NewNetworkError("failed to execute publish messages request", err)
+		return NewNetworkError("failed to execute publish messages request", err)
 	}
 
-	if resp.StatusCode() != http.StatusOK {
-		return nil, NewAPIError(resp.StatusCode(), resp.Body)
+	if resp.StatusCode() != http.StatusOK && resp.StatusCode() != http.StatusNoContent { // StatusOK is still there for backward compatibility
+		return NewAPIError(resp.StatusCode(), resp.Body)
 	}
 
 	p.logger.V(4).Info(
 		"published messages",
 		"count", len(messages),
-		"message_ids", resp.JSON200.MessageIds,
 		"status_code", resp.StatusCode(),
 	)
-	return resp.JSON200.MessageIds, nil
+	return nil
 }
 
 // Purge removes all messages currently stored in the topic.
