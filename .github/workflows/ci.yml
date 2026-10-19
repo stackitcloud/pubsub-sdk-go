@@ -25,6 +25,9 @@ on:
       - '*'
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   check-license:
     runs-on: ubuntu-latest

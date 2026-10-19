@@ -22,6 +22,9 @@ on:
         required: true
         type: string
 
+permissions:
+  contents: read
+
 jobs:
   create-release:
     name: Create Release
