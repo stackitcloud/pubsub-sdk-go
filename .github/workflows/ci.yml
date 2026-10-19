@@ -98,8 +98,9 @@ jobs:
       - name: Import QA Profile and Login
         env:
           STACKIT_SERVICE_ACCOUNT_KEY: ${{ secrets.STACKIT_SERVICE_ACCOUNT_KEY }}
+          STACKIT_QA_ENV_JSON: ${{ secrets.STACKIT_QA_ENV_JSON }}
         run: |
-          echo '${{ secrets.STACKIT_QA_ENV_JSON }}' > $RUNNER_TEMP/qa-env.json
+          echo "$STACKIT_QA_ENV_JSON" > "$RUNNER_TEMP/qa-env.json"
           
             if stackit config profile list | grep -q "pubsub-qa"; then
               echo "Profile 'pubsub-qa' found, deleting it."
