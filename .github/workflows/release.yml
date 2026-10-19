@@ -22,6 +22,9 @@ on:
         required: true
         type: string
 
+permissions:
+  contents: read
+
 jobs:
   create-release:
     name: Create Release
@@ -37,9 +40,10 @@ jobs:
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ inputs.version }}
         run: |
-          gh release create ${{ inputs.version }} \
-            --title "Release ${{ inputs.version }}" \
+          gh release create "$VERSION" \
+            --title "Release $VERSION" \
             --generate-notes \
             --target main \
             --latest
