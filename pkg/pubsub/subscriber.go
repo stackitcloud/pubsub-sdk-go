@@ -173,6 +173,11 @@ func (s *Subscriber) Pull(ctx context.Context, opts ...PullOption) (PullMessages
 		return nil, NewAPIError(resp.StatusCode(), resp.Body)
 	}
 
+	if resp.JSON200 == nil {
+		// The generated client only sets JSON200 for JSON content types, so a proxy page lands here.
+		return nil, NewAPIError(resp.StatusCode(), resp.Body[:min(len(resp.Body), maxErrorBodyBytes)])
+	}
+
 	messages := toSDKMessages(resp.JSON200.Messages, s)
 
 	s.logger.V(4).Info(
@@ -186,3 +191,5 @@ func (s *Subscriber) Pull(ctx context.Context, opts ...PullOption) (PullMessages
 func (s *Subscriber) Wait() {
 	s.wg.Wait()
 }
+
+const maxErrorBodyBytes = 256

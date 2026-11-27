@@ -18,6 +18,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
+	"errors"
 	"io"
 	"net/http"
 	"testing"
@@ -77,5 +78,27 @@ func TestWire(t *testing.T) {
 		str, err := messages[0].DecodeString()
 		g.Expect(err).ToNot(gomega.HaveOccurred())
 		g.Expect(str).To(gomega.Equal(string(payload)))
+	})
+
+	t.Run("returns an error for a non-JSON pull response", func(t *testing.T) {
+		g := gomega.NewWithT(t)
+		rt := stubRoundTripper(func(*http.Request) *http.Response {
+			return &http.Response{
+				StatusCode: http.StatusOK,
+				Header:     http.Header{"Content-Type": []string{"text/html"}},
+				Body:       io.NopCloser(bytes.NewBufferString("<html>gateway page</html>")),
+			}
+		})
+		subscriber := pubsub.NewSubscriber(uuid.New(), uuid.New(), pubsub.WithHTTPRoundTripper(rt))
+
+		var messages pubsub.PullMessages
+		var err error
+		g.Expect(func() { messages, err = subscriber.Pull(context.Background()) }).ToNot(gomega.Panic())
+
+		g.Expect(messages).To(gomega.BeNil())
+		var apiErr *pubsub.APIError
+		g.Expect(errors.As(err, &apiErr)).To(gomega.BeTrue())
+		g.Expect(apiErr.StatusCode).To(gomega.Equal(http.StatusOK))
+		g.Expect(apiErr.Msg).To(gomega.ContainSubstring("gateway page"))
 	})
 }
