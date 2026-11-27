@@ -80,7 +80,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       ENVIRONMENT: pubsub.eu01.qa.onstackit.cloud
-      TOKEN_CUSTOM_URI: https://service-account.api.qa.stackit.cloud/token
+      TOKEN_CUSTOM_URI: https://accounts.qa.stackit.cloud/oauth/v2/token
 
     steps:
       - name: Checkout Code
