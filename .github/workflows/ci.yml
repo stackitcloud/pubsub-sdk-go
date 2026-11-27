@@ -117,7 +117,7 @@ jobs:
             echo "pubsub-qa should been removed. Creating..."
             stackit config profile import -c "@$RUNNER_TEMP/qa-env.json" --name pubsub-qa
             stackit config profile set pubsub-qa
-            stackit auth activate-service-account # key is being read out from the env STACKIT_SERVICE_ACCOUNT_KEY
+            stackit auth activate-service-account --verbosity debug # key is being read out from the env STACKIT_SERVICE_ACCOUNT_KEY
 
       - name: Create PubSub Topic and Subscription
         run: ./scripts/create-pubsub-resources.sh
