@@ -80,7 +80,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       ENVIRONMENT: pubsub.eu01.qa.onstackit.cloud
-      TOKEN_CUSTOM_URI: https://service-account.api.qa.stackit.cloud/token
+      TOKEN_CUSTOM_URI: https://accounts.qa.stackit.cloud/oauth/v2/token
 
     steps:
       - name: Checkout Code
@@ -117,7 +117,8 @@ jobs:
             echo "pubsub-qa should been removed. Creating..."
             stackit config profile import -c "@$RUNNER_TEMP/qa-env.json" --name pubsub-qa
             stackit config profile set pubsub-qa
-            stackit auth activate-service-account # key is being read out from the env STACKIT_SERVICE_ACCOUNT_KEY
+            stackit config set --token-custom-endpoint "$TOKEN_CUSTOM_URI"
+            stackit auth activate-service-account --verbosity debug # key is being read out from the env STACKIT_SERVICE_ACCOUNT_KEY
 
       - name: Create PubSub Topic and Subscription
         run: ./scripts/create-pubsub-resources.sh

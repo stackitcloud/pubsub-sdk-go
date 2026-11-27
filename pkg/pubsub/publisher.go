@@ -66,8 +66,6 @@ func NewPublisher(topicID uuid.UUID, opts ...Option) *Publisher {
 	return publisher
 }
 
-// PublishStrings acts as a lightweight adapter converting string slice to byte slices,
-// deferring all encoding safely to the core Publish method.
 func (p *Publisher) PublishStrings(ctx context.Context, messages ...string) error {
 	byteMessages := make([][]byte, len(messages))
 	for i, msg := range messages {
@@ -76,13 +74,11 @@ func (p *Publisher) PublishStrings(ctx context.Context, messages ...string) erro
 	return p.Publish(ctx, byteMessages)
 }
 
-// Publish processes raw bytes, encodes them transparently using bytesToBase64,
-// and transmits them out via the API client.
+// Publish transmits raw bytes via the API client.
+// The JSON encoding of the request base64-encodes each payload exactly once.
 func (p *Publisher) Publish(ctx context.Context, messages [][]byte) error {
-	encodedMessages := bytesToBase64(messages...)
-
-	messagesToPublish := make([]api.PublishMessage, len(encodedMessages))
-	for i, msg := range encodedMessages {
+	messagesToPublish := make([]api.PublishMessage, len(messages))
+	for i, msg := range messages {
 		messagesToPublish[i] = api.PublishMessage{
 			Data: msg,
 		}
